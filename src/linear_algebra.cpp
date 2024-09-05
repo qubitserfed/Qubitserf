@@ -436,116 +436,32 @@ bool sym_prod(BVector a, BVector b) {
 // input:  a matrix in whose rows span an isotropic space V
 // output: a matrix whose rows span the isotropic closure of V
 // warning: slowness inherited from basis_completion
-BMatrix isotropic_closure(BMatrix res) {
-    to_row_echelon(res);
-    BMatrix extension = basis_completion(res);
+BMatrix isotropic_closure(BMatrix v_base) {
+    BMatrix result;
+    BMatrix extension = basis_completion(v_base);
 
     while (!extension.empty()) {
         BVector last_ext = extension.last_row();
         
         int anticommuter = -1;
-        for (int i = 0; i < res.n; ++i) {
-            if (sym_prod(last_ext, res.row(i))) {
+        for (int i = 0; i < v_base.n; ++i) {
+            if (sym_prod(last_ext, v_base.row(i))) {
                 anticommuter = i;
             }
         }
 
         if (anticommuter == -1) {
-            // if the operator commutes with everyone, we can just add it to the closure
-            res.append_row(last_ext);
-            extension.pop_row();
+            result.append_row(last_ext); // if the operator commutes with everyone, we can just add it to the closure
         }
         else {
-            // otherwise, if it anticommutes with some anticommuter, we can use it to make every other vector in the extension commute with the anticommuter and then pop
+            // otherwise, if it does not commute with some anticommuter in v_base, we can use it to make every other vector in the extension commutes with the anticommuter and then pop
             for (int i = 0; i < extension.n - 1; ++i) {
-                if (sym_prod(extension.row(i), res.row(anticommuter)))
+                if (sym_prod(extension.row(i), v_base.row(anticommuter)))
                     extension.add_rows(extension.n - 1, i);
             }
-            extension.pop_row();
         }
+        extension.pop_row();
     }
 
-    to_row_echelon(res);
-
-    return res;
-}
-
-// input: a matrix whose rows span a space V and a variable 'prioritary'
-// output: a matrix whose rows span a space W such that V and W
-// intersect trivially and their sum is the total space. If
-// prioritary equals false, it will prioritize adding even-column rows,
-// otherwise it will prioritize odd-column rows
-// invariant: if the input is CSS, the output will be CSS as well
-BMatrix prefered_basis_completion(BMatrix mat, bool prioritary) {
-    const int n = mat.n;
-    const int m = mat.m;
-
-    to_row_echelon(mat);
-
-    BMatrix res;
-    for (int i = int(prioritary); i < m; i+= 2) {
-        BVector candidate(m);
-
-        candidate.set(i, true);
-        candidate = canonical_quotient(candidate, mat);
-        if (!candidate.is_zero()) {
-            res.append_row(candidate);
-
-            mat.append_row(candidate); // this needs to be optimized eventually
-            to_row_echelon(mat); 
-        }
-    }
-
-    for (int i = int(!prioritary); i < m; i+= 2) {
-        BVector candidate(m);
-
-        candidate.set(i, true);
-        candidate = canonical_quotient(candidate, mat);
-        if (!candidate.is_zero()) {
-            res.append_row(candidate);
-
-            mat.append_row(candidate); // this needs to be optimized eventually
-            to_row_echelon(mat); 
-        }
-    }
-
-    return res;
-}
-
-
-BMatrix prefered_isotropic_closure(BMatrix res, bool prioritary) {
-    to_row_echelon(res);
-    BMatrix extension = prefered_basis_completion(res, prioritary);
-
-    std::reverse(extension.mat.begin(), extension.mat.end());
-
-    while (!extension.empty()) {
-        BVector last_ext = extension.last_row();
-        
-        int anticommuter = -1;
-        for (int i = 0; i < res.n; ++i) {
-            if (sym_prod(last_ext, res.row(i))) {
-                anticommuter = i;
-            }
-        }
-
-        if (anticommuter == -1) {
-            // if the operator commutes with everyone, we can just add it to the closure
-            res.append_row(last_ext);
-            //print(res);
-            extension.pop_row();
-        }
-        else {
-            // otherwise, if it anticommutes with some anticommuter, we can use it to make every other vector in the extension commute with the anticommuter and then pop
-            for (int i = 0; i < extension.n - 1; ++i) {
-                if (sym_prod(extension.row(i), res.row(anticommuter)))
-                    extension.add_rows(extension.n - 1, i);
-            }
-            extension.pop_row();
-        }
-    }
-
-    to_row_echelon(res);
-
-    return res;
+    return result;
 }

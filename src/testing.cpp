@@ -46,8 +46,10 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
 
         for (int j = 0; j < code[i].size(); ++j) {
             switch (code[i][j]) {
-                case '_': break;
-                case 'I': break;
+                case '_':
+                case '.':
+                case 'I':
+                    break;
                 case 'X':
                     row.set(2 * j + 1, 1);
                     break;
@@ -90,8 +92,21 @@ std::vector<BMatrix> ben_codes() {
     return bencodes;
 }
 
+/*
+    TODO:
+    *) Write bruteforce searches for the x and z distances as well
+    *) Fix the algorithm if needed
+    *) Write a decent makefile
+    *) CPU multithreading implementation for the exponential part of brouwer_zimmerman
+    *) GPU multithreading implementation for the exponential part of brouwer_zimmerman
+    *) SAT-solver for the exponential part of brouwer_zimmerman
+    *) Try to see how you can mess with the Brouwer-Zimmerman matrix sequence
+*/
+
 int main() {
     auto codes = ben_codes();
+
+    codes.push_back(steane_code());
 
     for (auto code: codes) {
         int z, x;

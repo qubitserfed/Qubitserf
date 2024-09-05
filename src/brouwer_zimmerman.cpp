@@ -83,10 +83,6 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
     std::vector< std::pair<BMatrix, int> > gamma_seq = brouwer_zimmerman_sequence(code_mat);
     int inner_bound = 2e9, outer_bound = -2e9;
 
-//    std::cout << "BZS:\n" << std::endl;
-//    for (auto mat: gamma_seq)
-//        print(mat.first);
-
     for (int d = 1; d <= n; ++d) {
         for (auto gen_pair: gamma_seq) {
             BMatrix gamma_mat = gen_pair.first;
@@ -118,35 +114,21 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
 
 
 std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
-    BMatrix z_closed_mat, x_closed_mat, x_stab, z_stab, x_closed, z_closed, junk;
+    BMatrix closure_mat, x_stab, z_stab, x_closed, z_closed;
 
-    to_row_echelon(stab_mat);
+    closure_mat = isotropic_closure(stab_mat);
 
-//    print(stab_mat);
-    
-    z_closed_mat = prefered_isotropic_closure(stab_mat, false);
-    x_closed_mat = prefered_isotropic_closure(stab_mat, true);
-    
+    std::tie(z_closed, x_closed) = zx_parts(closure_mat);
     std::tie(z_stab, x_stab) = zx_parts(stab_mat);
-//    print(z_stab);
 
-    x_stab.remove_zeros();
-    z_stab.remove_zeros();
-    
-    to_row_echelon(x_stab);
     to_row_echelon(z_stab);
+    to_row_echelon(x_stab);
 
-    std::tie(z_closed, junk) = zx_parts(z_closed_mat);
-    std::tie(junk, x_closed) = zx_parts(x_closed_mat);
+    z_stab.remove_zeros();
+    x_stab.remove_zeros();
 
-    z_stab.remove_zeros(); z_stab.sort_rows();
-    z_closed.remove_zeros(); z_closed.sort_rows();
-
-    x_stab.remove_zeros(); x_stab.sort_rows();
-    x_closed.remove_zeros(); x_closed.sort_rows();
-
-//    print(z_stab);
-//    print(z_closed);
+    z_closed.remove_zeros();
+    x_closed.remove_zeros();;
 
     const int z_dist = brouwer_zimmerman(z_stab, z_closed);
     const int x_dist = brouwer_zimmerman(x_stab, x_closed);

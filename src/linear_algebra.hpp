@@ -67,5 +67,3 @@ BMatrix             basis_completion                (BMatrix);
 constexpr u64       raw_sym_prod_ll                 (const u64 &, const u64&);
 bool                sym_prod                        (BVector, BVector);
 BMatrix             isotropic_closure               (BMatrix);
-BMatrix             prefered_basis_completion       (BMatrix mat, bool prioritary);
-BMatrix             prefered_isotropic_closure      (BMatrix res, bool prioritary);
