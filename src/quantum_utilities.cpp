@@ -79,6 +79,42 @@ int bruteforce_distance0(BMatrix gen_mat) {
     return 0;
 }
 
+int non_stab_dist(BMatrix stab_mat, BMatrix closure_mat) {
+    const int n = stab_mat.m;
+
+    to_row_echelon(stab_mat);
+    to_row_echelon(closure_mat);
+    
+    try {
+        for (int d = 1; d <= n; ++d) {
+            combinations(n, d, [&](std::vector<bool> vec) {
+                BVector word(vec);
+                if (!in_span(stab_mat, word) && in_span(closure_mat, word))
+                    throw d;
+            });
+        }
+    }
+    catch (int d) {
+        return d;
+    }
+
+    my_assert(false);
+    return 0;
+}
+
+std::pair<int, int> bruteforce_zx_distance0(BMatrix stab_mat) {
+    BMatrix closure_mat, z_stab, x_stab, z_closure, x_closure;
+
+    closure_mat = isotropic_closure(stab_mat);
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+    std::tie(z_closure, x_closure) = zx_parts(closure_mat);
+
+    return std::make_pair(
+        non_stab_dist(z_stab, z_closure),
+        non_stab_dist(x_stab, x_closure)
+    );
+}
+
 std::pair<BMatrix, BMatrix> zx_parts(BMatrix mat) {
     const int n = mat.n;
     const int m = mat.m;

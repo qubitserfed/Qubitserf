@@ -110,7 +110,7 @@ int main() {
 
     for (auto code: codes) {
         int z, x;
-        std::tie(z, x) = get_zx_distances(code);
+        std::tie(z, x) = bruteforce_zx_distance0(code);
         std::cout << x << ' ' << z << std::endl;
     }
 
