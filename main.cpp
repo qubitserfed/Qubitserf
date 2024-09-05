@@ -28,8 +28,12 @@ constexpr int popcount(u64 num) {
     };
     const int n = sizeof(masks) / sizeof(masks[0]);
 
-    for (int i = 0; i < n; ++i)
-        num = (num & masks[i]) + ((num >> (1 << i)) & masks[i]);
+    num = (num & masks[0]) + ((num >> (1 << 0)) & masks[0]);
+    num = (num & masks[1]) + ((num >> (1 << 1)) & masks[1]);
+    num = (num & masks[2]) + ((num >> (1 << 2)) & masks[2]);
+    num = (num & masks[3]) + ((num >> (1 << 3)) & masks[3]);
+    num = (num & masks[4]) + ((num >> (1 << 4)) & masks[4]);
+    num = (num & masks[5]) + ((num >> (1 << 5)) & masks[5]);
 
     return num;
 }
