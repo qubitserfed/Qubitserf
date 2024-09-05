@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include <cstdio>
 #include <cassert>
 
 using u64 = unsigned long long;
@@ -16,11 +17,21 @@ void my_assert(bool arg) {
     assert(arg);
 }
 
-int popcount(u64 num) { // unoptimized piece of crap (junk, fix this)
-    int ans = 0;
-    for (int i = 0; i < 64; ++i)
-        ans+= (num & (1ULL << i)) ? 1 : 0;
-    return ans;
+constexpr int popcount(u64 num) {
+    const u64 masks[] = {
+        0x5555555555555555ULL,
+        0x3333333333333333ULL,
+        0xf0f0f0f0f0f0f0fULL,
+        0xff00ff00ff00ffULL,
+        0xffff0000ffffULL,
+        0xffffffffULL,
+    };
+    const int n = sizeof(masks) / sizeof(masks[0]);
+
+    for (int i = 0; i < n; ++i)
+        num = (num & masks[i]) + ((num >> (1 << i)) & masks[i]);
+
+    return num;
 }
 
 /// Start of BVector definitions
@@ -862,10 +873,8 @@ int main() {
     }
 
     BMatrix code = bmatrix_conversion(code_strs);
-
-    int z_dist, x_dist;
-
     std::cout << get_distance(code) << std::endl;
 
     return 0;
 }
+  
