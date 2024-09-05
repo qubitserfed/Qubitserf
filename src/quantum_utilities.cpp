@@ -115,6 +115,14 @@ std::pair<int, int> bruteforce_zx_distance0(BMatrix stab_mat) {
     );
 }
 
+int bruteforce_distance1(BMatrix stab_mat) {
+    int z_dist, x_dist;
+
+    std::tie(z_dist, x_dist) = bruteforce_zx_distance0(stab_mat);
+
+    return std::min(z_dist, x_dist);
+}
+
 std::pair<BMatrix, BMatrix> zx_parts(BMatrix mat) {
     const int n = mat.n;
     const int m = mat.m;
