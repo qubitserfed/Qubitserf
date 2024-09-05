@@ -211,7 +211,7 @@ BMatrix identity(const int &n) {
     return res;
 }
 
-BMatrix transpose(const BMatrix &origin) {
+BMatrix transpose(BMatrix &origin) {
     const int n_origin = origin.n;
     const int m_origin = origin.m;
     const int n = m_origin;
@@ -220,7 +220,7 @@ BMatrix transpose(const BMatrix &origin) {
     BMatrix res(n, m);
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < m; ++j)
-            res.set(i, j, res.get(j, i));
+            res.set(i, j, origin.get(j, i));
 
     return res;
 }
@@ -548,7 +548,7 @@ void iterate_words_of_weight(int n, int k, std::function<void(std::vector<bool>)
             return;
         }
 
-        if (weight <= n - (int(stack.size()) / 2 + 1)) {
+        if (weight <= (2 * n - int(stack.size())) / 2 - 1 ) {
             stack.push_back(0); stack.push_back(0);
             bkt(weight);
             stack.pop_back(); stack.pop_back();
@@ -704,11 +704,12 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
     for (int d = 1; d <= n; ++d) {
         for (auto gen_pair: gamma_seq) {
             BMatrix gamma_mat = gen_pair.first;
+            BMatrix transposed_gamma_mat = transpose(gamma_mat);
 
             combinations(n, d, [&](std::vector<bool> v0) {
                 BVector vec(v0);
 
-                BVector codeword = vec * gamma_mat;
+                BVector codeword = transposed_product(vec, transposed_gamma_mat);
 
                 if (!in_span(stab_mat, codeword))
                     inner_bound = std::min(inner_bound, codeword.weight());
@@ -729,7 +730,9 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
     return inner_bound;
 }
 
-int get_distance(BMatrix stab_mat) {
+
+std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
+
     BMatrix closed_mat, x_stab, z_stab, x_closed, z_closed;
 
     to_row_echelon(stab_mat);
@@ -748,12 +751,18 @@ int get_distance(BMatrix stab_mat) {
 //    print(z_stab);
 //    print(z_closed);
 
-    const int x_dist = brouwer_zimmerman(x_stab, x_closed);
     const int z_dist = brouwer_zimmerman(z_stab, z_closed);
+    const int x_dist = brouwer_zimmerman(x_stab, x_closed);
 
-    return std::min(z_dist, x_dist);
+    return std::make_pair(z_dist, x_dist);
 }
 
+
+int get_distance(BMatrix stab_mat) {
+    int z_dist, x_dist;
+    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat);
+    return std::min(z_dist, x_dist);
+}
 
 /// End of Brouwer-Zimmerman Algorithm
 /// -------------------------------------------------------
@@ -786,7 +795,7 @@ BMatrix steane_code() {
     return steane;
 }
 
-BMatrix bmatrix_ben_conversion(std::vector<std::string> code) {
+BMatrix bmatrix_conversion(std::vector<std::string> code) {
     const int m = 2 * code.back().size();
     const int n = code.size();
 
@@ -798,39 +807,6 @@ BMatrix bmatrix_ben_conversion(std::vector<std::string> code) {
         for (int j = 0; j < code[i].size(); ++j) {
             switch (code[i][j]) {
                 case '_': break;
-                case 'X':
-                    row.set(2 * j + 1, 1);
-                    break;
-                case 'Z':
-                    row.set(2 * j, 1);
-                    break;
-                case 'Y':
-                    row.set(2 * j, 1);
-                    row.set(2 * j + 1, 1);
-                    break;
-                default:
-                    my_assert(0);
-                    break;
-            }
-        }
-
-        result.append_row(row);
-    }
-
-    return result;
-}
-
-BMatrix bmatrix_standard_conversion(std::vector<std::string> code) {
-    const int m = 2 * code.back().size();
-    const int n = code.size();
-
-    BMatrix result;
-
-    for (int i = 0; i < n; ++i) {
-        BVector row(m);
-
-        for (int j = 0; j < code[i].size(); ++j) {
-            switch (code[i][j]) {
                 case 'I': break;
                 case 'X':
                     row.set(2 * j + 1, 1);
@@ -863,7 +839,7 @@ std::vector<BMatrix> ben_codes() {
 
     while (getline(fi, current)) {
         if (current == "") {
-            bencodes.push_back(bmatrix_ben_conversion(code));
+            bencodes.push_back(bmatrix_conversion(code));
             code.clear();
         }
         else {
@@ -885,9 +861,12 @@ int main() {
         code_strs.push_back(current);
     }
 
-    BMatrix code = bmatrix_standard_conversion(code_strs);
+    BMatrix code = bmatrix_conversion(code_strs);
 
-    std::cout << get_distance(code) << std::endl;
+    int z_dist, x_dist;
+
+    std::tie(z_dist, x_dist) = get_zx_distances(code);
+    std::cout << z_dist << ' ' << x_dist << std::endl;
 
     return 0;
 }
