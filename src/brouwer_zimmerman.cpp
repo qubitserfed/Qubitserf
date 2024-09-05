@@ -127,7 +127,7 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
     z_closed_mat = prefered_isotropic_closure(stab_mat, false);
     x_closed_mat = prefered_isotropic_closure(stab_mat, true);
     
-    std::tie(x_stab, z_stab) = zx_parts(stab_mat);
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
 //    print(z_stab);
 
     x_stab.remove_zeros();
@@ -148,8 +148,8 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
 //    print(z_stab);
 //    print(z_closed);
 
-    const int z_dist = brouwer_zimmerman(z_stab, x_closed);
-    const int x_dist = brouwer_zimmerman(x_stab, z_closed);
+    const int z_dist = brouwer_zimmerman(z_stab, z_closed);
+    const int x_dist = brouwer_zimmerman(x_stab, x_closed);
 
     return std::make_pair(z_dist, x_dist);
 }
