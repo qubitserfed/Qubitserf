@@ -865,8 +865,7 @@ int main() {
 
     int z_dist, x_dist;
 
-    std::tie(z_dist, x_dist) = get_zx_distances(code);
-    std::cout << z_dist << ' ' << x_dist << std::endl;
+    std::cout << get_distance(code) << std::endl;
 
     return 0;
 }
