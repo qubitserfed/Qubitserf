@@ -3,14 +3,20 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file",
-            "command": "/usr/bin/g++",
+            "command": "make test",
             "args": [
-                "-std=c++14",
+                /*
                 "-fdiagnostics-color=always",
+                "-std=c++14",
                 "-g",
-                "${file}",
+                "${fileDirname}/linear_algebra.cpp",
+                "${fileDirname}/combinatorics.cpp",
+                "${fileDirname}/quantum_utilities.cpp",
+                "${fileDirname}/brouwer_zimmerman.cpp",
+                "${fileDirname}/testing.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
+                */
             ],
             "options": {
                 "cwd": "${fileDirname}"
