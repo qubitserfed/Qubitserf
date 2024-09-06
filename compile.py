@@ -23,7 +23,7 @@ if __name__ == "__main__":
     os.system(f'g++ {cflags} {library_deps} build/interface.o -o build/interface')
 
     # build tester
-    os.system(f'g++ {cflags} {library_deps} build/tester.o -o build/tester')
+    os.system(f'g++ {cflags} {library_deps} build/testing.o -o build/testing')
 
     # build c library
     os.system(f'g++ -c {cflags} {library_deps} build/library.o -o build/library')
