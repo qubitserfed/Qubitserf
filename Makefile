@@ -1,19 +1,40 @@
-test:
-	g++ -g -c -std=c++17 src/linear_algebra.cpp 			-o build/linear_algebra_dev.o
-	g++ -g -c -std=c++17 src/combinatorics.cpp 				-o build/combinatorics_dev.o
-	g++ -g -c -std=c++17 src/quantum_utilities.cpp 			-o build/quantum_utilities_dev.o
-	g++ -g -c -std=c++17 src/brouwer_zimmerman.cpp 			-o build/brouwer_zimmerman_dev.o
-	g++ -g -c -std=c++17 src/interface.cpp 					-o build/interface_dev.o
-	g++ -g -c -std=c++17 src/testing.cpp 					-o build/testing_dev.o
-	g++ -g -std=c++17 build/linear_algebra_dev.o build/combinatorics_dev.o build/quantum_utilities_dev.o build/brouwer_zimmerman_dev.o build/testing_dev.o -o build/test
-	rm build/*.o
+# Compiler
+CXX = g++
 
-interface:
-	g++ -c -Ofast -std=c++17 src/linear_algebra.cpp    		-o build/linear_algebra.o
-	g++ -c -Ofast -std=c++17 src/combinatorics.cpp 	   		-o build/combinatorics.o
-	g++ -c -Ofast -std=c++17 src/quantum_utilities.cpp 		-o build/quantum_utilities.o
-	g++ -c -Ofast -std=c++17 src/brouwer_zimmerman.cpp 		-o build/brouwer_zimmerman.o
-	g++ -c -Ofast -std=c++17 src/interface.cpp 		   		-o build/interface.o
+# Directories
+SRC_DIR = src
+BUILD_DIR = build
 
-	g++ -g -std=c++17 build/linear_algebra.o build/combinatorics.o build/quantum_utilities.o build/brouwer_zimmerman.o build/interface.o -o build/interface
-	rm build/*.o
+# Source files
+SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
+
+# Object files (replace src/ with build/ and .cpp with .o)
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC_FILES))
+
+# Flags
+CXXFLAGS = -Wall -Wextra -std=c++17 -Ofast -pthread
+
+# Targets
+all: $(OBJ_FILES)
+
+# Rule to build object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Create the build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+OBJ_FILES_NO_INTERFACE_NO_TEST := $(filter-out $(BUILD_DIR)/interface.o $(BUILD_DIR)/testing.o, $(OBJ_FILES))
+
+# Compile interface.cpp into an executable, linking with all object files except testing.o
+interface: $(BUILD_DIR)/interface.o $(OBJ_FILES_NO_INTERFACE)
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/interface $(BUILD_DIR)/interface.o $(OBJ_FILES_NO_INTERFACE_NO_TEST)
+
+# Compile testing.cpp into an executable, linking with all object files except interface.o
+testing: $(BUILD_DIR)/testing.o $(OBJ_FILES_NO_testing)
+	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/testing $(BUILD_DIR)/testing.o $(OBJ_FILES_NO_INTERFACE_NO_TEST)
+
+# Clean build directory
+clean:
+	rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/interface $(BUILD_DIR)/testing
