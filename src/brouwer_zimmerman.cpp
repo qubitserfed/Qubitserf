@@ -82,7 +82,7 @@ int exponential_part_singlethreaded(BMatrix stab_mat, std::vector<BMatrix> trans
         combinations(
             n,
             d,
-            [&](std::vector<bool> v0) -> int {
+            [&](std::vector<bool> v0) -> void {
                 BVector vec(v0);
                 BVector codeword = transposed_product(vec, transposed_gamma_mat);
 
