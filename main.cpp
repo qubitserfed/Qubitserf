@@ -851,14 +851,32 @@ std::vector<BMatrix> ben_codes() {
 }
 
 
-int main() {
+// int main() {
+//     std::string current;
+//     std::vector<std::string> code_strs;
+    
+//     while (getline(std::cin, current)) {
+//         if (current == "") break;
+//         code_strs.push_back(current);
+//     }
+
+//     BMatrix code = bmatrix_conversion(code_strs);
+
+//     int z_dist, x_dist;
+
+//     std::cout << get_distance(code) << std::endl;
+
+//     return 0;
+// }
+
+int main(int argc, char * argv[]) {
     std::string current;
     std::vector<std::string> code_strs;
     
-    while (getline(std::cin, current)) {
-        if (current == "")
-            continue;
-        code_strs.push_back(current);
+    int check_dx;
+    // can't use 0 here, contains program name
+    for (check_dx = 1; check_dx < argc; check_dx++) {
+        code_strs.push_back(std::string(argv[check_dx]));
     }
 
     BMatrix code = bmatrix_conversion(code_strs);
