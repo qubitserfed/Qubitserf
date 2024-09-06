@@ -1,5 +1,6 @@
-#include <iostream>
 #include <algorithm>
+#include <future>
+#include <thread>
 #include <vector>
 
 #include "linear_algebra.hpp"
@@ -88,14 +89,26 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
             BMatrix gamma_mat = gen_pair.first;
             BMatrix transposed_gamma_mat = transpose(gamma_mat);
 
-            combinations(n, d, [&](std::vector<bool> v0) {
-                BVector vec(v0);
+            int weight_d_bound = parallel_combinations(
+                n,
+                d,
+                [&](std::vector<bool> v0) -> int {
+                    BVector vec(v0);
 
-                BVector codeword = transposed_product(vec, transposed_gamma_mat);
+                    BVector codeword = transposed_product(vec, transposed_gamma_mat);
 
-                if (!in_span(stab_mat, codeword))
-                    inner_bound = std::min(inner_bound, codeword.weight());
-            });
+                    if (!in_span(stab_mat, codeword))
+                        return codeword.weight();
+                    else
+                        return 2e9;
+                },
+                [&](int a, int b) {
+                    return std::min(a, b);
+                },
+                16
+            );
+
+            inner_bound = std::min(inner_bound, weight_d_bound);
         }
 
         outer_bound = 0;

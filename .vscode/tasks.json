@@ -3,8 +3,9 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file",
-            "command": "/usr/bin/g++",
+            "command": "make test",
             "args": [
+                /*
                 "-fdiagnostics-color=always",
                 "-std=c++14",
                 "-g",
@@ -15,6 +16,7 @@
                 "${fileDirname}/testing.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
+                */
             ],
             "options": {
                 "cwd": "${fileDirname}"

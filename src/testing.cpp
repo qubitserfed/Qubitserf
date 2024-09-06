@@ -73,7 +73,7 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
 }
 
 std::vector<BMatrix> ben_codes() {
-    std::ifstream fi("../testing/d4_codes.txt");
+    std::ifstream fi("testing/d4_codes.txt");
 
     std::vector<BMatrix> bencodes;
     std::vector<std::string> code;
@@ -105,8 +105,6 @@ std::vector<BMatrix> ben_codes() {
 
 int main() {
     auto codes = ben_codes();
-
-    codes.push_back(steane_code());
 
     for (auto code: codes) {
         int z, x;
