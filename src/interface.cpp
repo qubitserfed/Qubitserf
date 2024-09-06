@@ -2,6 +2,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,16 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
 int main(int argc, char **argv) {
     std::string current;
     std::vector<std::string> code_strs;
+    std::set< std::string > argv_flags;
+    COMPUTE_TYPE compute_type;
     
+    if (argv_flags.find("--multithreaded") != argv_flags.end()) {
+        compute_type = CPU_MULTITHREAD;
+    }
+    else {
+        compute_type = CPU_SINGLETHREAD;
+    }
+
     while (getline(std::cin, current)) {
         if (current == "")
             break;
@@ -63,14 +73,17 @@ int main(int argc, char **argv) {
 
     BMatrix code = bmatrix_conversion(code_strs);
 
-    if (argc > 0 && !strcmp(argv[1], "zx")) {
+    for (int i = 1; i < argc; ++i)
+        argv_flags.insert( std::string(argv[i]) );
+
+    if (argc > 0 && argv_flags.find("--zx") != argv_flags.end()) {
         int z_dist, x_dist;
         
-        std::tie(z_dist, x_dist) = get_zx_distances(code);
+        std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
         std::cout << z_dist << ' ' << x_dist << std::endl;
     }
     else {
-        std::cout << get_distance(code) << std::endl;
+        std::cout << get_distance(code, compute_type) << std::endl;
     }
     return 0;
 }
