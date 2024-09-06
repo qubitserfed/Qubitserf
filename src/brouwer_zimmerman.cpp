@@ -75,41 +75,82 @@ std::vector<std::pair<BMatrix, int>> brouwer_zimmerman_sequence(BMatrix gen) {
     return gamma_seq;
 }
 
-// input: generator matrix of an arbitrary code
-// output: distance of the code
-int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
+int exponential_part_singlethreaded(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma_sequence, int n, int d) {
+    int bound = 2e9;
+
+    for (auto transposed_gamma_mat: transposed_gamma_sequence) {
+        combinations(
+            n,
+            d,
+            [&](std::vector<bool> v0) -> int {
+                BVector vec(v0);
+                BVector codeword = transposed_product(vec, transposed_gamma_mat);
+
+                if (!in_span(stab_mat, codeword))
+                    bound = std::min(bound, codeword.weight());
+            }
+        );
+    }
+
+    return bound;
+}
+
+int exponential_part_multithreaded(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma_sequence, int n, int d) {
+    int bound = 2e9;
+
+    for (auto transposed_gamma_mat: transposed_gamma_sequence) {
+        int weight_d_bound = parallel_combinations(
+            n,
+            d,
+            [&](std::vector<bool> v0) -> int {
+                BVector vec(v0);
+                BVector codeword = transposed_product(vec, transposed_gamma_mat);
+
+                if (!in_span(stab_mat, codeword))
+                    return codeword.weight();
+                else
+                    return 2e9;
+            },
+            [&](int a, int b) {
+                return std::min(a, b);
+            },
+            16
+        );
+
+        bound = std::min(weight_d_bound, bound);
+    }
+
+    return bound;
+}
+
+int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_type) {
     const int n = code_mat.n;
     const int m = code_mat.m;
 
     std::vector< std::pair<BMatrix, int> > gamma_seq = brouwer_zimmerman_sequence(code_mat);
+    std::vector< BMatrix > transposed_gamma_seq;
+
+    for (auto &entry_pair : gamma_seq)
+        transposed_gamma_seq.push_back(transpose(entry_pair.first));
+
     int inner_bound = 2e9, outer_bound = -2e9;
 
     for (int d = 1; d <= n; ++d) {
-        for (auto gen_pair: gamma_seq) {
-            BMatrix gamma_mat = gen_pair.first;
-            BMatrix transposed_gamma_mat = transpose(gamma_mat);
+        int weight_d_bound;
 
-            int weight_d_bound = parallel_combinations(
-                n,
-                d,
-                [&](std::vector<bool> v0) -> int {
-                    BVector vec(v0);
-
-                    BVector codeword = transposed_product(vec, transposed_gamma_mat);
-
-                    if (!in_span(stab_mat, codeword))
-                        return codeword.weight();
-                    else
-                        return 2e9;
-                },
-                [&](int a, int b) {
-                    return std::min(a, b);
-                },
-                16
-            );
-
-            inner_bound = std::min(inner_bound, weight_d_bound);
+        switch (compute_type) {
+            case CPU_SINGLETHREAD:
+                weight_d_bound = exponential_part_singlethreaded(stab_mat, transposed_gamma_seq, n, d);
+                break;
+            case CPU_MULTITHREAD:
+                weight_d_bound = exponential_part_multithreaded(stab_mat, transposed_gamma_seq, n, d);
+                break;
+            case GPU:
+                my_assert(0);
+                break;
         }
+
+        inner_bound = std::min(inner_bound, weight_d_bound);
 
         outer_bound = 0;
         for (auto gen_pair: gamma_seq) {
@@ -123,10 +164,10 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat) {
     }
 
     return inner_bound;
+
 }
 
-
-std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
+std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
     BMatrix closure_mat, x_stab, z_stab, x_closed, z_closed;
 
     closure_mat = isotropic_closure(stab_mat);
@@ -143,15 +184,17 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat) {
     z_closed.remove_zeros();
     x_closed.remove_zeros();;
 
-    const int z_dist = brouwer_zimmerman(z_stab, z_closed);
-    const int x_dist = brouwer_zimmerman(x_stab, x_closed);
+    const int z_dist = brouwer_zimmerman(z_stab, z_closed, compute_type);
+    const int x_dist = brouwer_zimmerman(x_stab, x_closed, compute_type);
 
     return std::make_pair(z_dist, x_dist);
 }
 
 
-int get_distance(BMatrix stab_mat) {
+// input: generator matrix of an arbitrary code
+// output: distance of the code
+int get_distance(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
     int z_dist, x_dist;
-    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat);
+    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat, compute_type);
     return std::min(z_dist, x_dist);
 }

@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     
     while (getline(std::cin, current)) {
         if (current == "")
-            continue;
+            break;
         code_strs.push_back(current);
     }
 
@@ -74,4 +74,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-  
