@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
     BMatrix code = bmatrix_conversion(code_strs);
 
-    if (argc == 0 && !strcmp(argv[0], "zx")) {
+    if (argc > 0 && !strcmp(argv[1], "zx")) {
         int z_dist, x_dist;
         
         std::tie(z_dist, x_dist) = get_zx_distances(code);
