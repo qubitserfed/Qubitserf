@@ -61,7 +61,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
             const int bucket = j / 64;
             const int bit = j % 64;
 
-            new_stab.set(j, bool(z_stab[i][bucket] & (1ULL << bit)));
+            new_stab.set(2*j, bool(z_stab[i][bucket] & (1ULL << bit)));
         }
     }
 
@@ -71,7 +71,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
             const int bucket = j / 64;
             const int bit = j % 64;
 
-            new_stab.set(j, bool(x_stab[i][bucket] & (1ULL << bit)));
+            new_stab.set(2*j+1, bool(x_stab[i][bucket] & (1ULL << bit)));
         }
     }
 }
