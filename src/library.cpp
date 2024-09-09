@@ -5,8 +5,32 @@
 #include "brouwer_zimmerman.hpp"
 
 extern "C" {
+    // input: n, m (the matrix dimensions), compute_type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+    // output: output to a pointer to the start of an int array containing the z distance and the x distance
     int *get_zx_distances(int, int, int, char **);
+
+    // input: n, m (the matrix dimensions), compute_type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+    // output: the distance of the code
     int get_distance(int, int, int, char **);
+
+
+    int *get_zx_distances_raw(
+        int,    // number of qubits
+        int,    // number of z stabilizers
+        u64 **, // z stabilizers
+        int,    // number of x stabilizers
+        u64 **, // x stabilizers
+        int     // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+    );
+
+    int get_distance_raw(
+        int,    // number of qubits
+        int,    // number of z stabilizers
+        u64 **, // z stabilizers
+        int,    // number of x stabilizers
+        u64 **, // x stabilizers
+        int     // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+    );
 }
 
 BMatrix from_c_array(int n, int m, char **stab_mat) {
@@ -27,6 +51,44 @@ BMatrix from_c_array(int n, int m, char **stab_mat) {
             }
         }
     }
+}
+
+BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
+    BMatrix mat;
+    for (int i = 0; i < nz; ++i) {
+        BVector new_stab(no_qubits);
+        for (int j = 0; j < no_qubits; ++j)  {
+            const int bucket = j / 64;
+            const int bit = j % 64;
+
+            new_stab.set(j, bool(z_stab[i][bucket] & (1ULL << bit)));
+        }
+    }
+
+    for (int i = 0; i < nx; ++i) {
+        BVector new_stab(no_qubits);
+        for (int j = 0; j < no_qubits; ++j)  {
+            const int bucket = j / 64;
+            const int bit = j % 64;
+
+            new_stab.set(j, bool(x_stab[i][bucket] & (1ULL << bit)));
+        }
+    }
+}
+
+int *get_zx_distances_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type) {
+    BMatrix stab_mat = from_raw(no_qubits, no_z_stab, z_stabs_raw, no_x_stab, x_stabs_raw);
+    int *res = new int[2];
+    std::tie(res[0], res[1]) = get_zx_distances(stab_mat, (COMPUTE_TYPE)compute_type);
+    return res;
+}
+
+int get_distance_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type) {
+    return get_distance(
+        from_raw(no_qubits, no_z_stab, z_stabs_raw, no_x_stab, x_stabs_raw),
+        (COMPUTE_TYPE) compute_type
+    );
+
 }
 
 int *get_zx_distances(int n, int m, int compute_type, char **stab_mat) {
