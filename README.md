@@ -1,6 +1,8 @@
 # Qubitserf
 Distance calculator for CSS codes based on the Brouwer-Zimmerman algorithm.
 
+Disclaimer: this code is still very much in early-development, but its main functionality is mostly considered to have been achieved.
+
 ## Build instructions
 Call the script `compile.py`. You will find the generated files in the `build` folder, most importantly the executable `interface`.
 
