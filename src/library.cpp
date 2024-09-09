@@ -51,6 +51,7 @@ BMatrix from_c_array(int n, int m, char **stab_mat) {
             }
         }
     }
+    return mat;
 }
 
 BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
