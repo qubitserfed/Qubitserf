@@ -56,7 +56,7 @@ BMatrix from_c_array(int n, int m, char **stab_mat) {
 BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
     BMatrix mat;
     for (int i = 0; i < nz; ++i) {
-        BVector new_stab(no_qubits);
+        BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
             const int bucket = j / 64;
             const int bit = j % 64;
@@ -66,7 +66,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
     }
 
     for (int i = 0; i < nx; ++i) {
-        BVector new_stab(no_qubits);
+        BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
             const int bucket = j / 64;
             const int bit = j % 64;
