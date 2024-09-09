@@ -74,6 +74,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
             new_stab.set(2*j+1, bool(x_stab[i][bucket] & (1ULL << bit)));
         }
     }
+    return mat;
 }
 
 int *get_zx_distances_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type) {
