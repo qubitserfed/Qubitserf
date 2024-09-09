@@ -92,7 +92,6 @@ int get_distance_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_s
         from_raw(no_qubits, no_z_stab, z_stabs_raw, no_x_stab, x_stabs_raw),
         (COMPUTE_TYPE) compute_type
     );
-
 }
 
 int *get_zx_distances(int n, int m, int compute_type, char **stab_mat) {
