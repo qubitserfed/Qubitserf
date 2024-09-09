@@ -64,6 +64,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
 
             new_stab.set(2*j, bool(z_stab[i][bucket] & (1ULL << bit)));
         }
+        mat.append_row(new_stab);
     }
 
     for (int i = 0; i < nx; ++i) {
@@ -74,6 +75,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
 
             new_stab.set(2*j+1, bool(x_stab[i][bucket] & (1ULL << bit)));
         }
+        mat.append_row(new_stab);
     }
     return mat;
 }
