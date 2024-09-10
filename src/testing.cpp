@@ -94,9 +94,6 @@ std::vector<BMatrix> ben_codes() {
 
 /*
     TODO:
-    *) Write bruteforce searches for the x and z distances as well
-    *) Fix the algorithm if needed
-    *) Write a decent makefile
     *) CPU multithreading implementation for the exponential part of brouwer_zimmerman
     *) GPU multithreading implementation for the exponential part of brouwer_zimmerman
     *) SAT-solver for the exponential part of brouwer_zimmerman
@@ -106,9 +103,11 @@ std::vector<BMatrix> ben_codes() {
 int main() {
     auto codes = ben_codes();
 
+    std :: cout << std::thread::hardware_concurrency() << "\n";
+
     for (auto code: codes) {
         int z, x;
-        std::tie(z, x) = bruteforce_zx_distance0(code);
+        std::tie(z, x) = get_zx_distances(code, CPU_MULTITHREAD);
         std::cout << x << ' ' << z << std::endl;
     }
 

@@ -78,6 +78,9 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
         }
         mat.append_row(new_stab);
     }
+
+    print(mat);
+
     return mat;
 }
 
