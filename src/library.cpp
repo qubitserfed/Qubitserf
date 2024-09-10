@@ -87,7 +87,6 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
             if (z_stab[i][bucket] & (1ULL << bit))
                 new_stab.vec[bucket2]|= (1ULL << bit2);
         }
-        print(new_stab);
         mat.append_row(new_stab);
     }
 
@@ -101,12 +100,10 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
 
             new_stab.set(2*j+1, x_stab[i][bucket] & (1ULL << bit));
         }
-        print(new_stab);
         mat.append_row(new_stab);
     }
 
     std::cout << "Whole matrix:\n";
-    print(mat);
 
     return mat;
 }
