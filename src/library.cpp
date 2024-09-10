@@ -61,7 +61,8 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
         for (int j = 0; j < no_qubits; ++j)  {
             const int bucket = j / 64;
             const int bit = j % 64;
-
+            // i is the stabilizer index
+            // bucket is an index that tells us where information about qubit j is stored, bitpacking into ULLs
             new_stab.set(2*j, bool(z_stab[i][bucket] & (1ULL << bit)));
         }
         print(new_stab);
