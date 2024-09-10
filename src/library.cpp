@@ -1,3 +1,4 @@
+#include <iostream>
 #include <tuple>
 #include <utility>
 
@@ -56,6 +57,21 @@ BMatrix from_c_array(int n, int m, char **stab_mat) {
 
 BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
     BMatrix mat;
+
+    std::cout << "Raw Z-stabs:\n";
+    for (int i = 0; i < nz; ++i) {
+        for (int j = 0; j < (no_qubits + 63) / 64; ++j)
+            std :: cout << z_stab[i][j] << " ";
+        std :: cout << '\n';
+    }
+    std::cout << "Raw X-stabs:\n";
+    for (int i = 0; i < nx; ++i) {
+        for (int j = 0; j < (no_qubits + 63) / 64; ++j)
+            std :: cout << x_stab[i][j] << " ";
+        std :: cout << '\n';
+    }
+
+    std::cout << "Z stabilizers:\n";
     for (int i = 0; i < nz; ++i) {
         BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
@@ -69,6 +85,8 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
         mat.append_row(new_stab);
     }
 
+
+    std::cout << "X stabilizers:\n";
     for (int i = 0; i < nx; ++i) {
         BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
@@ -81,6 +99,7 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
         mat.append_row(new_stab);
     }
 
+    std::cout << "Whole matrix:\n";
     print(mat);
 
     return mat;
