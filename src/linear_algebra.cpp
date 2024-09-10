@@ -437,12 +437,12 @@ bool sym_prod(BVector a, BVector b) {
 // output: a matrix whose rows span the isotropic closure of V
 // warning: slowness inherited from basis_completion
 BMatrix isotropic_closure(BMatrix v_base) {
-    BMatrix result;
+    BMatrix result = v_base;
     BMatrix extension = basis_completion(v_base);
 
     while (!extension.empty()) {
         BVector last_ext = extension.last_row();
-        
+
         int anticommuter = -1;
         for (int i = 0; i < v_base.n; ++i) {
             if (sym_prod(last_ext, v_base.row(i))) {
