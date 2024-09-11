@@ -8,12 +8,15 @@
 #include "quantum_utilities.hpp"
 #include "brouwer_zimmerman.hpp"
 
-// input:  two *sorted* int vectors
+// input:  two int vectors
 // output: a sorted vector containing the elements of a that are not contained in b
 std::vector<int> list_diff(std::vector<int> a, std::vector<int> b) {
     std::vector<int> res;
     int i = 0;
     int j = 0;
+
+    std::sort(a.begin(), a.end());
+    std::sort(b.begin(), b.end());
 
     res.reserve(a.size());
     for (; i < a.size(); ++i) {
