@@ -407,8 +407,19 @@ BMatrix basis_completion(BMatrix mat) {
         if (!candidate.is_zero()) {
             res.append_row(candidate);
 
-            mat.append_row(candidate); // this needs to be optimized eventually
-            to_row_echelon(mat); 
+            int first_col = -1;
+            for (int i = 0; i < m; ++i) {
+                if (candidate.get(i)) {
+                    first_col = i;
+                    break;
+                }
+            }
+            my_assert(first_col != -1);
+
+            mat.append_row(candidate);
+            for (int i = 0; i < mat.n - 1; ++i)
+                if (mat.get(i, first_col))
+                    mat.add_rows(mat.n - 1, i);
         }
     }
 
