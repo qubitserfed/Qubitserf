@@ -58,46 +58,52 @@ BMatrix from_c_array(int n, int m, char **stab_mat) {
 BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
     BMatrix mat;
 
-    std::cout << "Raw Z-stabs:\n";
-    for (int i = 0; i < nz; ++i) {
-        for (int j = 0; j < (no_qubits + 63) / 64; ++j)
-            std :: cout << z_stab[i][j] << " ";
-        std :: cout << '\n';
-    }
-    std::cout << "Raw X-stabs:\n";
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < (no_qubits + 63) / 64; ++j)
-            std :: cout << x_stab[i][j] << " ";
-        std :: cout << '\n';
-    }
+    // std::cout << "Raw Z-stabs:\n";
+    // for (int i = 0; i < nz; ++i) {
+    //     for (int j = 0; j < (no_qubits + 63) / 64; ++j)
+    //         std :: cout << z_stab[i][j] << " ";
+    //     std :: cout << '\n';
+    // }
+    // std::cout << "Raw X-stabs:\n";
+    // for (int i = 0; i < nx; ++i) {
+    //     for (int j = 0; j < (no_qubits + 63) / 64; ++j)
+    //         std :: cout << x_stab[i][j] << " ";
+    //     std :: cout << '\n';
+    // }
 
-    std::cout << "Z stabilizers:\n";
+    // std::cout << "Z stabilizers:\n";
     for (int i = 0; i < nz; ++i) {
         BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
             const int bucket = j / 64;
             const int bit = j % 64;
-            // i is the stabilizer index
-            // bucket is an index that tells us where information about qubit j is stored, bitpacking into ULLs
-            new_stab.set(2*j, bool(z_stab[i][bucket] & (1ULL << bit)));
+
+            int j2 = j * 2;
+            const int bucket2 = j2 / 64;
+            const int bit2 = j2 % 64;
+
+            // std :: cout << z_stab[i][bucket] << ' ' << j << ' ' << bit << ' ' << bucket << ' ' << (z_stab[i][bucket] & (1ULL << bit)) << std::endl;
+
+            if (z_stab[i][bucket] & (1ULL << bit))
+                new_stab.vec[bucket2]|= (1ULL << bit2);
         }
         mat.append_row(new_stab);
     }
 
 
-    std::cout << "X stabilizers:\n";
+    // std::cout << "X stabilizers:\n";
     for (int i = 0; i < nx; ++i) {
         BVector new_stab(2*no_qubits);
         for (int j = 0; j < no_qubits; ++j)  {
             const int bucket = j / 64;
             const int bit = j % 64;
 
-            new_stab.set(2*j+1, bool(x_stab[i][bucket] & (1ULL << bit)));
+            new_stab.set(2*j+1, x_stab[i][bucket] & (1ULL << bit));
         }
         mat.append_row(new_stab);
     }
 
-    std::cout << "Whole matrix:\n";
+    // std::cout << "Whole matrix:\n";
 
     return mat;
 }
