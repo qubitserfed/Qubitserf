@@ -6,6 +6,7 @@
 
 #include "linear_algebra.hpp"
 #include "combinatorics.hpp"
+#include "quantum_utilities.hpp"
 #include "middle_algorithm.hpp"
 
 struct SyndromeCell {
@@ -71,4 +72,35 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
 
     my_assert(0);
     return 0;
+}
+
+
+std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat) {
+    BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
+
+    closure_mat = logical_operators(stab_mat);
+
+    std::tie(z_ops, x_ops) = zx_parts(closure_mat);
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+
+    to_row_echelon(z_stab);
+    to_row_echelon(x_stab);
+
+    z_stab.remove_zeros();
+    x_stab.remove_zeros();
+
+    z_ops.remove_zeros();
+    x_ops.remove_zeros();
+
+    const int z_dist = middle_algorithm(x_stab, x_ops);
+    const int x_dist = middle_algorithm(z_stab, z_ops);
+
+    return std::make_pair(z_dist, x_dist);
+}
+
+
+int get_distance_with_middle(BMatrix stab_mat) {
+    int z_dist, x_dist;
+    std::tie(z_dist, x_dist) = get_zx_distances_with_middle(stab_mat);
+    return std::min(z_dist, x_dist);
 }
