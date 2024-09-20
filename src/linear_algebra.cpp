@@ -104,6 +104,18 @@ bool operator * (const BVector &a, const BVector &b) {
     return ans % 2;
 }
 
+bool operator < (const BVector &a, const BVector &b) {
+    return a.vec < b.vec;
+}
+
+bool operator == (const BVector &a, const BVector &b) {
+    return a.vec == b.vec;
+}
+
+bool operator != (const BVector &a, const BVector &b) {
+    return a.vec != b.vec;
+}
+
 /// End of BVector definitions
 /// -------------------------------------------------------
 /// Start of BMatrix definitions
@@ -204,7 +216,6 @@ void print(BMatrix mat) {
         for (int j = 0; j < m; ++j)
             std::cout << mat.get(i, j) << " \n"[j == m - 1];
     }
-    std::cout << std::endl;
 }
 
 BMatrix identity(const int &n) {

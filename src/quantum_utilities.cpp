@@ -52,6 +52,7 @@ void iterate_words_of_weight(int n, int k, std::function<void(std::vector<bool>)
     bkt(k);
 }
 
+
 int bruteforce_distance0(BMatrix gen_mat) {
     const int n = gen_mat.n;
     const int m = gen_mat.m;
@@ -79,6 +80,7 @@ int bruteforce_distance0(BMatrix gen_mat) {
     return 0;
 }
 
+
 int non_stab_dist(BMatrix stab_mat, BMatrix closure_mat) {
     const int n = stab_mat.m;
 
@@ -102,6 +104,7 @@ int non_stab_dist(BMatrix stab_mat, BMatrix closure_mat) {
     return 0;
 }
 
+
 std::pair<int, int> bruteforce_zx_distance0(BMatrix stab_mat) {
     BMatrix closure_mat, z_stab, x_stab, z_closure, x_closure;
 
@@ -115,6 +118,7 @@ std::pair<int, int> bruteforce_zx_distance0(BMatrix stab_mat) {
     );
 }
 
+
 int bruteforce_distance1(BMatrix stab_mat) {
     int z_dist, x_dist;
 
@@ -122,6 +126,7 @@ int bruteforce_distance1(BMatrix stab_mat) {
 
     return std::min(z_dist, x_dist);
 }
+
 
 std::pair<BMatrix, BMatrix> zx_parts(BMatrix mat) {
     const int n = mat.n;
@@ -143,4 +148,34 @@ std::pair<BMatrix, BMatrix> zx_parts(BMatrix mat) {
     }
 
     return std::make_pair(z_mat, x_mat);
+}
+
+
+BMatrix logical_operators(BMatrix v_base) {
+    BMatrix result, extension = basis_completion(v_base);
+
+    while (!extension.empty()) {
+        BVector last_ext = extension.last_row();
+
+        int anticommuter = -1;
+        for (int i = 0; i < v_base.n; ++i) {
+            if (sym_prod(last_ext, v_base.row(i))) {
+                anticommuter = i;
+            }
+        }
+
+        if (anticommuter == -1) {
+            result.append_row(last_ext); // if the operator commutes with everyone, we can just add it to the closure
+        }
+        else {
+            // otherwise, if it does not commute with some anticommuter in v_base, we can use it to make every other vector in the extension commute with the anticommuter and then pop
+            for (int i = 0; i < extension.n - 1; ++i) {
+                if (sym_prod(extension.row(i), v_base.row(anticommuter)))
+                    extension.add_rows(extension.n - 1, i);
+            }
+        }
+        extension.pop_row();
+    }
+
+    return result;
 }

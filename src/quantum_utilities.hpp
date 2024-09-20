@@ -17,3 +17,4 @@ int                         bruteforce_distance0            (BMatrix);
 int                         bruteforce_distance1            (BMatrix);
 std::pair<int, int>         bruteforce_zx_distance0         (BMatrix);
 std::pair<BMatrix, BMatrix> zx_parts                        (BMatrix);
+BMatrix                     logical_operators               (BMatrix);

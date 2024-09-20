@@ -6,7 +6,9 @@
 #include <tuple>
 #include <vector>
 
+#include "linear_algebra.hpp"
 #include "brouwer_zimmerman.hpp"
+#include "middle_algorithm.hpp"
 
 BMatrix steane_code() {
     const int n = 6;
@@ -72,6 +74,29 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
     return result;
 }
 
+int get_middle_distance(BMatrix stab_mat) {
+    BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
+
+    closure_mat = logical_operators(stab_mat);
+
+    std::tie(z_ops, x_ops) = zx_parts(closure_mat);
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+
+    to_row_echelon(z_stab);
+    to_row_echelon(x_stab);
+
+    z_stab.remove_zeros();
+    x_stab.remove_zeros();
+
+    z_ops.remove_zeros();
+    x_ops.remove_zeros();
+
+    const int z_dist = middle_algorithm(x_stab, x_ops);
+    const int x_dist = middle_algorithm(z_stab, z_ops);
+
+    return std::min(z_dist, x_dist);
+}
+
 std::vector<BMatrix> ben_codes() {
     std::ifstream fi("testing/d4_codes.txt");
 
@@ -92,23 +117,12 @@ std::vector<BMatrix> ben_codes() {
     return bencodes;
 }
 
-/*
-    TODO:
-    *) CPU multithreading implementation for the exponential part of brouwer_zimmerman
-    *) GPU multithreading implementation for the exponential part of brouwer_zimmerman
-    *) SAT-solver for the exponential part of brouwer_zimmerman
-    *) Try to see how you can mess with the Brouwer-Zimmerman matrix sequence
-*/
-
 int main() {
     auto codes = ben_codes();
 
-    std :: cout << std::thread::hardware_concurrency() << "\n";
-
     for (auto code: codes) {
         int z, x;
-        std::tie(z, x) = get_zx_distances(code, CPU_MULTITHREAD);
-        std::cout << x << ' ' << z << std::endl;
+        std::cout << get_middle_distance(code) << std::endl;
     }
 
     return 0;
