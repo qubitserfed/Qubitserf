@@ -58,12 +58,8 @@ int main(int argc, char **argv) {
     std::set< std::string > argv_flags;
     COMPUTE_TYPE compute_type;
     
-    if (argv_flags.find("--multithreaded") != argv_flags.end()) {
-        compute_type = CPU_MULTITHREAD;
-    }
-    else {
-        compute_type = CPU_SINGLETHREAD;
-    }
+
+    compute_type = CPU;
 
     while (getline(std::cin, current)) {
         if (current == "")

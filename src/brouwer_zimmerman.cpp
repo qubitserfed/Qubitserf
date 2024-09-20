@@ -78,7 +78,7 @@ std::vector<std::pair<BMatrix, int>> brouwer_zimmerman_sequence(BMatrix gen) {
     return gamma_seq;
 }
 
-int exponential_part_singlethreaded(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma_sequence, int n, int d) {
+int exponential_part_cpu(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma_sequence, int n, int d) {
     int bound = 2e9;
 
     for (auto transposed_gamma_mat: transposed_gamma_sequence) {
@@ -93,34 +93,6 @@ int exponential_part_singlethreaded(BMatrix stab_mat, std::vector<BMatrix> trans
                     bound = std::min(bound, codeword.weight());
             }
         );
-    }
-
-    return bound;
-}
-
-int exponential_part_multithreaded(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma_sequence, int n, int d) {
-    int bound = 2e9;
-
-    for (auto transposed_gamma_mat: transposed_gamma_sequence) {
-        int weight_d_bound = parallel_combinations(
-            n,
-            d,
-            [&](std::vector<bool> v0) -> int {
-                BVector vec(v0);
-                BVector codeword = transposed_product(vec, transposed_gamma_mat);
-
-                if (!in_span(stab_mat, codeword))
-                    return codeword.weight();
-                else
-                    return 2e9;
-            },
-            [&](int a, int b) {
-                return std::min(a, b);
-            },
-            16
-        );
-
-        bound = std::min(weight_d_bound, bound);
     }
 
     return bound;
@@ -142,11 +114,8 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_t
         int weight_d_bound;
 
         switch (compute_type) {
-            case CPU_SINGLETHREAD:
-                weight_d_bound = exponential_part_singlethreaded(stab_mat, transposed_gamma_seq, n, d);
-                break;
-            case CPU_MULTITHREAD:
-                weight_d_bound = exponential_part_multithreaded(stab_mat, transposed_gamma_seq, n, d);
+            case CPU:
+                weight_d_bound = exponential_part_cpu(stab_mat, transposed_gamma_seq, n, d);
                 break;
             case GPU:
                 my_assert(0);
