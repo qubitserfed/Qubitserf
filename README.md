@@ -7,12 +7,12 @@ Disclaimer: this code is still very much in early-development, but its main func
 Call the script `compile.py`. You will find the generated files in the `build` folder, most importantly the executable `interface`.
 
 ## Use instructions for the interface
-Run using the flag `--zx` for the program to output both the $Z$-distance and the $X$-distance. Run using the `--multithreaded` flag to enable the use of multithreading. Add the stabilizers line by line as in the example below. The input is considered complete upon reading an empty line or `EOF`.
+Run using the flag `--zx` for the program to output both the $Z$-distance and the $X$-distance. Run using the `--threads` flag, followed by maximum number of threads to break the process into. Add the stabilizers line by line as in the example below. The input is considered complete upon reading an empty line or `EOF`.
 
 ### Example interactions
-In the following example, a large CSS code is provided as input and the program outputs `5 4`, meaning that the code has $Z$-distance $5$ and $X$-distance 4.
+In the following example, a large CSS code is provided as input and the program outputs `5 4`, meaning that the code has $Z$-distance $5$ and $X$-distance 4. It also lets the program break the task into 16 threads.
 ```
-./interface --zx
+./interface --zx --threads 16
 ZZIIIZZIIIIIIIIIIIII
 IXXIIIXXIIIIIIIIIIII
 IIZZIIIZZIIIIIIIIIII

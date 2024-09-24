@@ -3,7 +3,7 @@ import sys
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "dev":
-        cflags = "-std=c++17 -g"
+        cflags = "-std=c++17 -g -pthread"
     else:
         cflags = "-std=c++17 -Ofast -pthread"
 

@@ -364,7 +364,7 @@ BVector canonical_quotient(BVector vec, BMatrix &mat) {
 
 // input: an n-dimensional vector v and an nxm matrix M in row_echelon form
 // output: whether v is part of the subspace spanned by the rows of M
-bool in_span(BMatrix &mat, const BVector &v) {
+bool in_span(BMatrix mat, const BVector &v) {
     return canonical_quotient(v, mat).is_zero();
 }
 

@@ -55,11 +55,16 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
 int main(int argc, char **argv) {
     std::string current;
     std::vector<std::string> code_strs;
-    std::set< std::string > argv_flags;
+    std::vector< std::string > argv_flags;
     COMPUTE_TYPE compute_type;
+    std::vector<std::string>::iterator it;
+    bool zx_flag = false;
     
-
-    compute_type = CPU;
+    compute_type = (COMPUTE_TYPE) {
+        true,
+        false,
+        1
+    };
 
     while (getline(std::cin, current)) {
         if (current == "")
@@ -70,9 +75,26 @@ int main(int argc, char **argv) {
     BMatrix code = bmatrix_conversion(code_strs);
 
     for (int i = 1; i < argc; ++i)
-        argv_flags.insert( std::string(argv[i]) );
+        argv_flags.push_back( std::string(argv[i]) );
 
-    if (argc > 0 && argv_flags.find("--zx") != argv_flags.end()) {
+
+    it = std::find(argv_flags.begin(), argv_flags.end(), "--threads");
+    if (it != argv_flags.end()) {
+        it++;
+        if (it != argv_flags.end()) {
+            compute_type.no_threads = std::stoi(*it);
+        }
+        else {
+            std::cerr << "--threads flag need be followed by the number of threads!\n";
+        }
+    }
+
+    std::cout << "No threads: " << compute_type.no_threads << std::endl;
+
+    if (std::find(argv_flags.begin(), argv_flags.end(), "--zx") != argv_flags.end())
+        zx_flag = true;
+
+    if (zx_flag) {
         int z_dist, x_dist;
         
         std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
@@ -81,5 +103,6 @@ int main(int argc, char **argv) {
     else {
         std::cout << get_distance(code, compute_type) << std::endl;
     }
+
     return 0;
 }

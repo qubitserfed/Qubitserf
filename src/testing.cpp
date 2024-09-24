@@ -98,7 +98,7 @@ int get_middle_distance(BMatrix stab_mat) {
 }
 
 std::vector<BMatrix> ben_codes() {
-    std::ifstream fi("testing/d4_codes.txt");
+    std::ifstream fi("testing/simoncode.txt");
 
     std::vector<BMatrix> bencodes;
     std::vector<std::string> code;
@@ -119,10 +119,13 @@ std::vector<BMatrix> ben_codes() {
 
 int main() {
     auto codes = ben_codes();
+    int no_threads;
+    
+    no_threads = 16;
 
     for (auto code: codes) {
         int z, x;
-        std::cout << get_middle_distance(code) << std::endl;
+        std::cout << get_distance(code, (COMPUTE_TYPE) {true, false, no_threads} ) << std::endl;
     }
 
     return 0;

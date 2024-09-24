@@ -9,11 +9,11 @@
 extern "C" {
     // input: n, m (the matrix dimensions), compute_type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
     // output: output to a pointer to the start of an int array containing the z distance and the x distance
-    int *get_zx_distances(int, int, int, char **);
+    int *get_zx_distances(int, int, char **, int, int);
 
     // input: n, m (the matrix dimensions), compute_type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
     // output: the distance of the code
-    int get_distance(int, int, int, char **);
+    int get_distance(int, int, char **, int, int);
 
 
     int *get_zx_distances_raw(
@@ -22,7 +22,8 @@ extern "C" {
         u64 **, // z stabilizers
         int,    // number of x stabilizers
         u64 **, // x stabilizers
-        int     // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+        int,    // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+        int
     );
 
     int get_distance_raw(
@@ -31,7 +32,8 @@ extern "C" {
         u64 **, // z stabilizers
         int,    // number of x stabilizers
         u64 **, // x stabilizers
-        int     // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+        int,    // compute type (0 singlethread, 1 multithread, 2 GPU (not yet implemented))
+        int
     );
 
     int *get_zx_distances_with_middle_raw(
@@ -106,25 +108,24 @@ BMatrix from_raw(int no_qubits, int nz, u64 **z_stab, int nx, u64 **x_stab) {
     return mat;
 }
 
-int *get_zx_distances_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type) {
+int *get_zx_distances_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type, int no_threads) {
     BMatrix stab_mat = from_raw(no_qubits, no_z_stab, z_stabs_raw, no_x_stab, x_stabs_raw);
     int *res = new int[2];
-    std::tie(res[0], res[1]) = get_zx_distances(stab_mat, (COMPUTE_TYPE)compute_type);
+    std::tie(res[0], res[1]) = get_zx_distances(stab_mat, (COMPUTE_TYPE){ compute_type == 0 ? true : false,  compute_type == 1 ? true : false, no_threads});
     return res;
 }
 
-int get_distance_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type) {
+int get_distance_raw(int no_qubits, int no_z_stab, u64 **z_stabs_raw, int no_x_stab, u64 **x_stabs_raw, int compute_type, int no_threads) {
     return get_distance(
         from_raw(no_qubits, no_z_stab, z_stabs_raw, no_x_stab, x_stabs_raw),
-        (COMPUTE_TYPE) compute_type
+        (COMPUTE_TYPE){ compute_type == 0 ? true : false,  compute_type == 1 ? true : false, no_threads}
     );
 }
 
-int *get_zx_distances(int n, int m, int compute_type, char **stab_mat) {
+int *get_zx_distances(int n, int m, char **stab_mat, int compute_type, int no_threads) {
     BMatrix mat = from_c_array(n, m, stab_mat);
     int *res = new int[2];
-    std::tie(res[0], res[1]) = get_zx_distances(mat, (COMPUTE_TYPE)compute_type);
-
+    std::tie(res[0], res[1]) = get_zx_distances(mat, (COMPUTE_TYPE){ compute_type == 0 ? true : false,  compute_type == 1 ? true : false, no_threads});
     return res;
 }
 
@@ -142,9 +143,9 @@ int *get_zx_distances_with_middle_raw(int no_qubits, int no_z_stab, u64 **z_stab
     return res;
 }
 
-int get_distance(int n, int m, int compute_type, char **stab_mat) {
+int get_distance(int n, int m, char **stab_mat, int compute_type, int no_threads) {
     return get_distance(
         from_c_array(n, m, stab_mat),
-        (COMPUTE_TYPE)compute_type
+        (COMPUTE_TYPE){ compute_type == 0 ? true : false,  compute_type == 1 ? true : false, no_threads}
     );
 }

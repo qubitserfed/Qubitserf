@@ -63,7 +63,7 @@ BVector             operator *                      (BVector, BMatrix);
 int                 to_row_echelon                  (BMatrix &);
 std::vector<int>    restricted_row_echelon          (BMatrix &, std::vector<int>);
 BVector             canonical_quotient              (BVector, BMatrix &);
-bool                in_span                         (BMatrix &, const BVector &);
+bool                in_span                         (BMatrix, const BVector &);
 BMatrix             transposed_product              (BMatrix &, BMatrix &);
 BVector             transposed_product              (const BVector &, BMatrix &);
 BMatrix             basis_completion                (BMatrix);

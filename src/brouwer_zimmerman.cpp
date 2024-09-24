@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <future>
+#include <iostream>
 #include <thread>
 #include <vector>
 
@@ -7,6 +8,7 @@
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
 #include "brouwer_zimmerman.hpp"
+#include "parallel_bz.hpp"
 
 // input:  two int vectors
 // output: a sorted vector containing the elements of a that are not contained in b
@@ -113,13 +115,16 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_t
     for (int d = 1; d <= n; ++d) {
         int weight_d_bound;
 
-        switch (compute_type) {
-            case CPU:
-                weight_d_bound = exponential_part_cpu(stab_mat, transposed_gamma_seq, n, d);
-                break;
-            case GPU:
-                my_assert(0);
-                break;
+        if (compute_type.CPU) {
+            weight_d_bound = compute_type.no_threads == 1 ?
+                exponential_part_cpu(stab_mat, transposed_gamma_seq, n, d) :
+                exponential_part_parallel(stab_mat, transposed_gamma_seq, n, d, compute_type.no_threads);
+        }
+        else if (compute_type.GPU) {
+            my_assert(0);
+        }
+        else {
+            my_assert(0);
         }
 
         inner_bound = std::min(inner_bound, weight_d_bound);
