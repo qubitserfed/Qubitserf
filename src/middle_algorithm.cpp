@@ -40,7 +40,7 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                 // check for compatilble words of weight d-1
                 it = s1.find(stab_syndome);
                 if (it != s1.end()) {
-                    if (it->second.size() > 2) {
+                    if (it->second.size() >= 2) {
                         throw 2 * d - 1;
                     }
                     else if (*it->second.begin() != anticomms_syndrome) {
@@ -50,7 +50,7 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
 
                 it = s0.find(stab_syndome);
                 if (it != s0.end()) {
-                    if (it->second.size() > 2) {
+                    if (it->second.size() >= 2) {
                         throw 2 * d;
                     }
                     else if (*it->second.begin() != anticomms_syndrome) {
