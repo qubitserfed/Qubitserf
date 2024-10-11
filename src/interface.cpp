@@ -12,6 +12,7 @@
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
 #include "brouwer_zimmerman.hpp"
+#include "middle_algorithm.hpp"
 
 using u64 = unsigned long long;
 
@@ -58,7 +59,7 @@ int main(int argc, char **argv) {
     std::vector< std::string > argv_flags;
     COMPUTE_TYPE compute_type;
     std::vector<std::string>::iterator it;
-    bool zx_flag = false;
+    bool zx_flag = false, middle_flag = false;
     
     compute_type = (COMPUTE_TYPE) {
         true,
@@ -78,6 +79,10 @@ int main(int argc, char **argv) {
         argv_flags.push_back( std::string(argv[i]) );
 
 
+    it = std::find(argv_flags.begin(), argv_flags.end(), "--middle");
+    if (it != argv_flags.end())
+        middle_flag = true;
+
     it = std::find(argv_flags.begin(), argv_flags.end(), "--threads");
     if (it != argv_flags.end()) {
         it++;
@@ -89,19 +94,23 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::cout << "No threads: " << compute_type.no_threads << std::endl;
-
     if (std::find(argv_flags.begin(), argv_flags.end(), "--zx") != argv_flags.end())
         zx_flag = true;
 
     if (zx_flag) {
         int z_dist, x_dist;
         
-        std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
+        if (middle_flag)
+            std::tie(z_dist, x_dist) = get_zx_distances_with_middle(code);
+        else
+            std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
         std::cout << z_dist << ' ' << x_dist << std::endl;
     }
     else {
-        std::cout << get_distance(code, compute_type) << std::endl;
+        if (middle_flag)
+            std::cout << get_distance_with_middle(code) << std :: endl;
+        else
+            std::cout << get_distance(code, compute_type) << std::endl;
     }
 
     return 0;
