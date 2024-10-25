@@ -57,6 +57,48 @@ void combinations(int n, int k, std::function<void(std::vector<bool>) > f) {
     bkt(k);
 }
 
+void symplectic_combinations(int n, int k, std::function<void(std::vector<bool> &) > f) {
+    std::vector<bool> stack;
+    stack.reserve(2 * n);
+
+    std::function<void(int)> bkt = [&](int weight) {
+        if (stack.size() / 2 == n) {
+            f(stack);
+            return;
+        }
+
+        if (weight <= n - (int(stack.size()) / 2 + 1)) {
+            stack.push_back(0);
+            stack.push_back(0);
+            bkt(weight);
+            stack.pop_back();
+            stack.pop_back();
+        }
+
+        if (weight > 0) {
+            stack.push_back(1);
+            stack.push_back(0);
+            bkt(weight - 1);
+            stack.pop_back();
+            stack.pop_back();
+
+            stack.push_back(0);
+            stack.push_back(1);
+            bkt(weight - 1);
+            stack.pop_back();
+            stack.pop_back();
+
+            stack.push_back(1);
+            stack.push_back(1);
+            bkt(weight - 1);
+            stack.pop_back();
+            stack.pop_back();
+        }
+    };
+
+    bkt(k);
+}
+
 BVector ith_lexicographic_permutation(int n, int k, u64 num) {
     const u64 infty = 0x3f3f3f3f3f3f3f3fULL;
 

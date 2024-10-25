@@ -8,13 +8,28 @@
 
 
 
-int stabilizer_weight(BVector v) {
+int symplectic_weight(BVector v) {
     int weight = 0;
     for (int i = 0; i < v.no_buckets(); ++i)
         weight+= popcount( (v.vec[i] & x_mask) | ((v.vec[i] & z_mask) >> 1) );
     return weight;
 }
 
+bool is_css(BMatrix code) {
+    bool is_css = true;
+    
+    for (int i = 0; i < code.n; ++i) {
+        bool is_x = false;
+        bool is_z = false;
+        for (int j = 0; j < code.row(i).no_buckets(); ++j) {
+            is_x|= code.row(i).vec[j] & x_mask;
+            is_z|= code.row(i).vec[j] & z_mask;    
+        }
+        is_css&= !(is_x && is_z);
+    }
+
+    return is_css;
+}
 
 // input: a number n and a function whose sole argument is a vector of bools
 // effect: the function gets called on all length 2n bitstrings corresponding to weight k stabilizers in lexicographical order

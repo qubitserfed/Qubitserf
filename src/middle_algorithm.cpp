@@ -18,7 +18,7 @@ struct SyndromeCell {
     }
 };
 
-int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
+int css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
     const int m = stab_mat.m;
 
     std::map< BVector, std::set<BVector> > s0, s1;
@@ -74,6 +74,94 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
     return 0;
 }
 
+int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
+    const int m = stab_mat.m / 2;
+
+    std::vector<std::pair<u64, u64>> s0, s1;
+
+    s0.emplace_back(0, 0);
+
+    for (int d = 1; d <= m; ++d) {
+        std::swap(s0, s1);
+        s0.clear();
+        s0.reserve(1<< 25);
+
+        try {
+            long long cnt = 0;
+            symplectic_combinations(m, d, [&] (std::vector<bool> &v0) {
+                BVector stab_syndome, anticomms_syndrome, v;
+                std::vector<std::pair<u64, u64>>::iterator it;
+
+                v = v0;
+                stab_syndome = BVector(stab_mat.n);
+                for (int i = 0; i < stab_mat.n; ++i)
+                    stab_syndome.set(i, sym_prod(stab_mat.row(i), v));
+
+                anticomms_syndrome = BVector(anticomms.n);
+                for (int i = 0; i < anticomms.n; ++i)
+                    anticomms_syndrome.set(i, sym_prod(anticomms.row(i), v));
+
+                // check for compatilble words of weight d-1
+                it = lower_bound(s1.begin(), s1.end(), std::make_pair(stab_syndome.vec[0], 0));
+                if (it != s1.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
+                    throw 2 * d - 1;
+
+                it++;
+                if (it != s1.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
+                    throw 2 * d - 1;
+                cnt++;
+            });
+
+            symplectic_combinations(m, d, [&] (const std::vector<bool> &v0) {
+                BVector stab_syndome, anticomms_syndrome, v;
+                std::vector<std::pair<u64, u64>>::iterator it;
+
+                v = v0;
+                stab_syndome = BVector(stab_mat.n);
+                for (int i = 0; i < stab_mat.n; ++i)
+                    stab_syndome.set(i, sym_prod(stab_mat.row(i), v));
+
+                anticomms_syndrome = BVector(anticomms.n);
+                for (int i = 0; i < anticomms.n; ++i)
+                    anticomms_syndrome.set(i, sym_prod(anticomms.row(i), v));
+
+                s0.emplace_back(stab_syndome.vec[0], anticomms_syndrome.vec[0]);
+            });
+
+            std::sort(s0.begin(), s0.end());
+
+            symplectic_combinations(m, d, [&] (const std::vector<bool> &v0) {
+                BVector stab_syndome, anticomms_syndrome, v;
+                std::vector<std::pair<u64, u64>>::iterator it;
+
+                v = v0;
+                stab_syndome = BVector(stab_mat.n);
+                for (int i = 0; i < stab_mat.n; ++i)
+                    stab_syndome.set(i, sym_prod(stab_mat.row(i), v));
+
+                anticomms_syndrome = BVector(anticomms.n);
+                for (int i = 0; i < anticomms.n; ++i)
+                    anticomms_syndrome.set(i, sym_prod(anticomms.row(i), v));
+
+                // check for compatilble words of weight d-1
+                it = lower_bound(s0.begin(), s0.end(), std::make_pair(stab_syndome.vec[0], 0));
+                if (it != s0.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
+                    throw 2 * d;
+
+                it++;
+                if (it != s0.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
+                    throw 2 * d;
+            });
+        }
+        catch (int result) {
+            return result;
+        }
+    }
+
+    my_assert(0);
+    return 0;
+}
+
 
 std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat) {
     BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
@@ -92,15 +180,20 @@ std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat) {
     z_ops.remove_zeros();
     x_ops.remove_zeros();
 
-    const int z_dist = middle_algorithm(x_stab, x_ops);
-    const int x_dist = middle_algorithm(z_stab, z_ops);
+    const int z_dist = css_middle_algorithm(x_stab, x_ops);
+    const int x_dist = css_middle_algorithm(z_stab, z_ops);
 
     return std::make_pair(z_dist, x_dist);
 }
 
 
 int get_distance_with_middle(BMatrix stab_mat) {
-    int z_dist, x_dist;
-    std::tie(z_dist, x_dist) = get_zx_distances_with_middle(stab_mat);
-    return std::min(z_dist, x_dist);
+    if (is_css(stab_mat)) {
+        int z_dist, x_dist;
+        std::tie(z_dist, x_dist) = get_zx_distances_with_middle(stab_mat);
+        return std::min(z_dist, x_dist);
+    }
+    else {
+        return css_middle_algorithm(stab_mat, logical_operators(stab_mat));
+    }
 }

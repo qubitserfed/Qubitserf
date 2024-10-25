@@ -4,6 +4,9 @@
 #include <thread>
 #include <vector>
 
+#include <cstdlib>
+
+
 #include "linear_algebra.hpp"
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"

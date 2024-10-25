@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     std::vector< std::string > argv_flags;
     COMPUTE_TYPE compute_type;
     std::vector<std::string>::iterator it;
-    bool zx_flag = false, middle_flag = false;
+    bool zx_flag = false, bz_flag = false;
     
     compute_type = (COMPUTE_TYPE) {
         true,
@@ -79,9 +79,23 @@ int main(int argc, char **argv) {
         argv_flags.push_back( std::string(argv[i]) );
 
 
-    it = std::find(argv_flags.begin(), argv_flags.end(), "--middle");
-    if (it != argv_flags.end())
-        middle_flag = true;
+    it = std::find(argv_flags.begin(), argv_flags.end(), "--bz");
+    if (it != argv_flags.end()) {
+        if (!is_css(code)) {
+            std :: cerr << "The Brouwer-Zimmerman Algorithm does not currently support non-CSS codes!\n";
+            exit(1);
+        }
+        bz_flag = true;
+    }
+
+    it = std::find(argv_flags.begin(), argv_flags.end(), "--zx");
+    if (it != argv_flags.end()) {
+        if (!is_css(code)) {
+            std :: cerr << "You cannot ask for the Z and X distances of a non-CSS code.\n";
+            exit(1);
+        }
+        zx_flag = true;
+    }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--threads");
     if (it != argv_flags.end()) {
@@ -91,26 +105,28 @@ int main(int argc, char **argv) {
         }
         else {
             std::cerr << "--threads flag need be followed by the number of threads!\n";
+            exit(1);
+        }
+
+        if (!bz_flag) {
+            std::cerr << "Only the Brouwer-Zimmerman algorithm admits parallelization, don't use the --threads flag with the default\n" << std::endl;
+            exit(1);
         }
     }
 
-    if (std::find(argv_flags.begin(), argv_flags.end(), "--zx") != argv_flags.end())
-        zx_flag = true;
-
     if (zx_flag) {
-        int z_dist, x_dist;
-        
-        if (middle_flag)
-            std::tie(z_dist, x_dist) = get_zx_distances_with_middle(code);
-        else
+        int z_dist, x_dist;        
+        if (bz_flag)
             std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
+        else
+            std::tie(z_dist, x_dist) = get_zx_distances_with_middle(code);
         std::cout << z_dist << ' ' << x_dist << std::endl;
     }
     else {
-        if (middle_flag)
-            std::cout << get_distance_with_middle(code) << std :: endl;
-        else
+        if (bz_flag)
             std::cout << get_distance(code, compute_type) << std::endl;
+        else
+            std::cout << get_distance_with_middle(code) << std :: endl;
     }
 
     return 0;

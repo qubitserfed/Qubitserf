@@ -123,10 +123,18 @@ int main() {
     
     no_threads = 16;
 
-    for (auto code: codes) {
-        int z, x;
-        std::cout << get_distance(code, (COMPUTE_TYPE) {true, false, no_threads} ) << std::endl;
+    std::ifstream fi("testing/non_css.txt");
+    std::vector<std::string> code;
+    std::string line;
+    while (fi >> line) {
+        if (line == "")
+            continue;
+        code.push_back(line);
     }
+    
+
+    BMatrix codemat =  bmatrix_conversion(code);
+    std::cout << middle_algorithm(codemat, logical_operators(codemat)) << std::endl;
 
     return 0;
 }
