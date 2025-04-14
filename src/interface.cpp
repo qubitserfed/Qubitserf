@@ -78,7 +78,6 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; ++i)
         argv_flags.push_back( std::string(argv[i]) );
 
-
     it = std::find(argv_flags.begin(), argv_flags.end(), "--bz");
     if (it != argv_flags.end()) {
         if (!is_css(code)) {
@@ -109,13 +108,13 @@ int main(int argc, char **argv) {
         }
 
         if (!bz_flag) {
-            std::cerr << "Only the Brouwer-Zimmerman algorithm admits parallelization, don't use the --threads flag with the default\n" << std::endl;
+            std::cout << get_distance_with_parallelized_middle(code, compute_type) << std::endl;
             exit(1);
         }
     }
 
     if (zx_flag) {
-        int z_dist, x_dist;        
+        int z_dist, x_dist;
         if (bz_flag)
             std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type);
         else

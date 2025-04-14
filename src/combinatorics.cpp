@@ -57,6 +57,39 @@ void combinations(int n, int k, std::function<void(std::vector<bool>) > f) {
     bkt(k);
 }
 
+bool parallel_combinations(int n, int k, std::function<bool(BVector &)> f, int no_threads) {
+    std::vector<u64> delimiters;
+    std::vector<std::future<bool>> threads;
+
+    u64 no_combinations = 1;
+    for (int i = 1; i <= k; ++i)
+        no_combinations = no_combinations * (n - i + 1) / i;
+
+    for (int i = 0; i <= no_threads; ++i)
+        delimiters.push_back(i * no_combinations / no_threads);
+
+    ith_lexicographic_permutation(1, 1, 0);
+    for (int i = 1; i < delimiters.size(); ++i) {
+        int iv_start = delimiters[i - 1];
+        int iv_end = delimiters[i];
+
+        threads.push_back(std::async(std::launch::async, [n, k, iv_start, iv_end, f] () -> bool {
+            BVector comb = ith_lexicographic_permutation(n, k, iv_start);
+            for (u64 it = 0; it < iv_end - iv_start; ++it) {
+                if (f(comb))
+                    return true;
+                advance_iterator(comb);
+            }
+            return false;
+        }));
+    }
+
+    for (std::future<bool> &th: threads)
+        if (th.get())
+            return true;
+    return false;
+}
+
 void symplectic_combinations(int n, int k, std::function<void(std::vector<bool> &) > f) {
     std::vector<bool> stack;
     stack.reserve(2 * n);

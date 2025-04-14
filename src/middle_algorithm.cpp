@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <set>
 #include <utility>
 
@@ -8,6 +9,8 @@
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
 #include "middle_algorithm.hpp"
+
+using u32 = unsigned int;
 
 struct SyndromeCell {
     int population_count;
@@ -84,7 +87,11 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
     for (int d = 1; d <= m; ++d) {
         std::swap(s0, s1);
         s0.clear();
-        s0.reserve(1<< 25);
+        long long reserve_size = 1;
+        for (int i = 1; i <= d; ++i)
+            reserve_size = reserve_size * (m - i + 1) / i;
+
+        s0.reserve(reserve_size);
 
         try {
             long long cnt = 0;
@@ -195,5 +202,147 @@ int get_distance_with_middle(BMatrix stab_mat) {
     }
     else {
         return css_middle_algorithm(stab_mat, logical_operators(stab_mat));
+    }
+}
+
+
+const long long MAX_BUCKETS = 1LL << 25;
+
+u32 hashfn(u64 key) {
+    key = key * 0xbf58476d1ce4e5b9ULL;
+    key = key ^ (key >> 32);
+    key = key * 0xbf58476d1ce4e5b9ULL;
+    key = key ^ (key >> 32);
+    key = key * 0xbf58476d1ce4e5b9ULL;
+    if (MAX_BUCKETS == 1LL << 32) // compile time constant
+        return key;
+    else
+        return key % MAX_BUCKETS;
+}
+
+u32 hashfn(const BVector &v) {
+    u64 key = 0;
+    for (int i = 0; i < v.vec.size(); ++i)
+        key = key + hashfn(v.vec[i]);
+    return key;
+}
+
+struct ParallelHashTable {
+    std::vector<std::pair<BVector, BVector>> table[MAX_BUCKETS];
+    std::vector<std::mutex> mutexes;
+    
+    ParallelHashTable() : mutexes(MAX_BUCKETS) {}
+
+    bool insert(const BVector &key, const BVector &value) { // returns true if the key was already present with a different value
+        u32 hash = hashfn(key) % MAX_BUCKETS;
+        std::lock_guard<std::mutex> lock(mutexes[hash]);
+        for (auto &pair : table[hash]) {
+            if (pair.first == key) {
+                if (pair.second != value) {
+                    return true;
+                }
+                return false;
+            }
+        }
+        table[hash].emplace_back(key, value);
+        return false;
+    }
+
+    bool find(const BVector &key, const BVector &value) {
+        u32 hash = hashfn(key) % MAX_BUCKETS;
+        std::lock_guard<std::mutex> lock(mutexes[hash]);
+        for (auto &pair : table[hash]) {
+            if (pair.first == key && pair.second != value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void clear() {
+        for (int i = 0; i < MAX_BUCKETS; ++i)
+            table[i].clear();
+    }
+};
+
+int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type) {
+    const int m = stab_mat.m;
+
+    ParallelHashTable *s0, *s1;
+    s0 = new ParallelHashTable();
+    s1 = new ParallelHashTable();
+
+    for (int d = 1; d <= m; ++d) {
+        std::swap(s0, s1);
+        s0->clear();
+
+        bool found = false;
+        found = parallel_combinations(m, d, [&] (BVector &v) {
+            BVector stab_syndome = transposed_product(v, stab_mat);
+            BVector anticomms_syndrome = transposed_product(v, anticomms);
+
+            if (s1->find(stab_syndome, anticomms_syndrome)) {
+                return true;
+            }
+            return false;
+        }, compute_type.no_threads);
+
+        if (found) {
+            delete s0;
+            delete s1;
+            return 2 * d - 1;
+        }
+
+        found = parallel_combinations(m, d, [&] (BVector &v) {
+            BVector stab_syndome = transposed_product(v, stab_mat);
+            BVector anticomms_syndrome = transposed_product(v, anticomms);
+            return s0->insert(stab_syndome, anticomms_syndrome);
+        }, compute_type.no_threads);
+
+        if (found) {
+            delete s0;
+            delete s1;
+            return 2 * d;
+        }
+    }
+
+    std::cerr<< "reached end"<<std::endl;
+    my_assert(0);
+    return 0;
+}
+
+std::pair<int, int> get_zx_distances_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+    BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
+
+    closure_mat = logical_operators(stab_mat);
+
+    std::tie(z_ops, x_ops) = zx_parts(closure_mat);
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+
+    to_row_echelon(z_stab);
+    to_row_echelon(x_stab);
+
+    z_stab.remove_zeros();
+    x_stab.remove_zeros();
+
+    z_ops.remove_zeros();
+    x_ops.remove_zeros();
+
+    const int z_dist = parallel_css_middle_algorithm(x_stab, x_ops, compute_type);
+    const int x_dist = parallel_css_middle_algorithm(z_stab, z_ops, compute_type);
+
+    return std::make_pair(z_dist, x_dist);
+}
+
+int get_distance_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+    if (is_css(stab_mat)) {
+        int z_dist, x_dist;
+        std::tie(z_dist, x_dist) = get_zx_distances_with_parallelized_middle(stab_mat, compute_type);
+        return std::min(z_dist, x_dist);
+    }
+    else {
+        // TODO: implement this
+        my_assert(0);
+        return -1;
     }
 }

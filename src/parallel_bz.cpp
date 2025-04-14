@@ -22,7 +22,7 @@ int exponential_part_parallel(BMatrix stab_mat, std::vector<BMatrix> transposed_
         int iv_start = delimiters[i - 1];
         int iv_end = delimiters[i];
 
-        threads.push_back(std::async([transposed_gamma_sequence, stab_mat, n, d, iv_start, iv_end] () -> int {
+        threads.push_back(std::async(std::launch::async, [&transposed_gamma_sequence, &stab_mat, n, d, iv_start, iv_end] () -> int {
             BVector comb = ith_lexicographic_permutation(n, d, iv_start);
             int bound  = 2e9;
             for (u64 it = 0; it < iv_end - iv_start; ++it) {

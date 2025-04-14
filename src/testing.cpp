@@ -17,11 +17,11 @@ BMatrix steane_code() {
     // 0 is I, 1 is Z, 2 is X, 3 is Y
     const int entries[n][m] = {
         {0, 0, 0, 1, 1, 1, 1},
-        {0, 0, 0, 3, 3, 3, 3},
+        {0, 0, 0, 2, 2, 2, 2},
         {0, 1, 1, 0, 0, 1, 1},
-        {0, 3, 3, 0, 0, 3, 3},
+        {0, 2, 2, 0, 0, 2, 2},
         {1, 0, 1, 0, 1, 0, 1},
-        {3, 0, 3, 0, 3, 0, 3}
+        {2, 0, 2, 0, 2, 0, 2}
     };
 
     BMatrix steane(n, 2 * m);
@@ -98,7 +98,7 @@ int get_middle_distance(BMatrix stab_mat) {
 }
 
 std::vector<BMatrix> ben_codes() {
-    std::ifstream fi("testing/simoncode.txt");
+    std::ifstream fi("testing/d4_codes.txt");
 
     std::vector<BMatrix> bencodes;
     std::vector<std::string> code;
@@ -119,11 +119,8 @@ std::vector<BMatrix> ben_codes() {
 
 int main() {
     auto codes = ben_codes();
-    int no_threads;
-    
-    no_threads = 16;
 
-    std::ifstream fi("testing/non_css.txt");
+    std::ifstream fi("testing/d4_codes.txt");
     std::vector<std::string> code;
     std::string line;
     while (fi >> line) {
@@ -132,9 +129,12 @@ int main() {
         code.push_back(line);
     }
     
+    for (auto &code : codes) {
+        std::cout << get_distance_with_parallelized_middle(code, COMPUTE_TYPE{true, false, 64}) << std::endl;
+    }
 
-    BMatrix codemat =  bmatrix_conversion(code);
-    std::cout << middle_algorithm(codemat, logical_operators(codemat)) << std::endl;
+//    BMatrix codemat = steane_code();
+//    std::cout << get_distance_with_parallelized_middle(codemat) << std::endl;
 
     return 0;
 }

@@ -7,15 +7,6 @@
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
 
-struct COMPUTE_TYPE {
-    bool CPU;
-    bool GPU;
-    int no_threads;
-};
-
-const COMPUTE_TYPE singlethreaded = {true, false, 1};
-const COMPUTE_TYPE gpu = {false, true, 0};
-
 std::vector<int>                        list_diff                   (std::vector<int>, std::vector<int>);
 std::vector<int>                        zero_columns                (BMatrix, std::vector<int>);
 std::vector<std::pair<BMatrix, int> >   brouwer_zimmerman_sequence  (BMatrix);
