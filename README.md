@@ -68,9 +68,3 @@ IIIIIIIIIIIIIIZIIIIZ
 4
 ```
 
-
-## To do:
-* Write a python wrapper
-* Implement the dynamic Brouwer-Zimmerman algorithm
-* Enable GPU acceleration for the exponential part
-* \$\$\$\$\$\$
