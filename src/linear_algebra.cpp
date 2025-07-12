@@ -16,10 +16,10 @@ int popcount(u64 num) {
     const u64 masks[] = {
         0x5555555555555555ULL,
         0x3333333333333333ULL,
-        0xf0f0f0f0f0f0f0fULL,
-        0xff00ff00ff00ffULL,
-        0xffff0000ffffULL,
-        0xffffffffULL,
+        0x0f0f0f0f0f0f0f0fULL,
+        0x00ff00ff00ff00ffULL,
+        0x0000ffff0000ffffULL,
+        0x00000000ffffffffULL,
     };
     const int n = sizeof(masks) / sizeof(masks[0]);
 
