@@ -151,7 +151,7 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                     anticomms_syndrome.set(i, sym_prod(anticomms.row(i), v));
 
                 // check for compatilble words of weight d-1
-                it = lower_bound(s0.begin(), s0.end(), std::make_pair(stab_syndome.vec[0], 0));
+                it = lower_bound(s0.begin(), s0.end(), std::make_pair(stab_syndome.vec[0], 0ULL));
                 if (it != s0.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
                     throw 2 * d;
 
