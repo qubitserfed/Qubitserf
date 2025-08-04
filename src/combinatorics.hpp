@@ -24,3 +24,4 @@ void    symplectic_combinations         (int n, int k, std::function<void(std::v
 BVector ith_lexicographic_permutation   (int, int, u64);
 bool    advance_iterator                (BVector &);
 bool    parallel_combinations           (int n, int k, std::function<bool(BVector &)>, int no_threads = 1);
+bool    parallel_symplectic_combinations(int n, int k, std::function<bool(BVector &)>, int no_threads = 1);

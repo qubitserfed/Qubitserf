@@ -92,7 +92,39 @@ bool parallel_combinations(int n, int k, std::function<bool(BVector &)> f, int n
 }
 
 bool parallel_symplectic_combinations(int n, int k, std::function<bool(BVector &)> f, int no_threads) {
-    // todo
+    return parallel_combinations(2 * n, k, [&] (BVector &comb) {
+        BVector symp_comb(2 * n);
+
+        std::function<bool(int)> bkt = [&](int idx) {
+            if (idx == n) {
+                return f(symp_comb);
+            }
+
+            bool res = false;
+            if (comb.get(idx)) {
+                symp_comb.set(2 * idx, 1);
+                symp_comb.set(2 * idx + 1, 0);
+                res|= bkt(idx + 1);
+
+                symp_comb.set(2 * idx, 0);
+                symp_comb.set(2 * idx + 1, 1);
+                res|= bkt(idx + 1);
+
+                symp_comb.set(2 * idx, 1);
+                symp_comb.set(2 * idx + 1, 1);
+                res|= bkt(idx + 1);
+            }
+            else {
+                symp_comb.set(2 * idx, 0);
+                symp_comb.set(2 * idx + 1, 0);
+                res|= bkt(idx + 1);
+            }
+
+            return res;
+        };
+
+        return bkt(0);
+    }, no_threads);
 }
 
 

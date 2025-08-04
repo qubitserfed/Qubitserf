@@ -141,7 +141,7 @@ int main() {
         k = code_mat.m / 2 - code_mat.n;
 
         std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
-        int dist = get_distance_with_middle(code_mat);
+        int dist = get_distance_with_parallelized_middle(code_mat, COMPUTE_TYPE { true, false, 16 });
         std::cout << dist << std::endl;
 
         if ((dist < low_bound || dist > high_bound) && (low_bound != 0 && high_bound != 0)) {

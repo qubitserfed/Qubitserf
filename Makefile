@@ -12,7 +12,7 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC_FILES))
 
 # Flags
-CXXFLAGS = -Wall -Wextra -std=c++17 -Ofast -pthread -fPIC
+CXXFLAGS = -Wall -Wextra -std=c++17 -O3 -ffast-math -pthread -fPIC
 
 # Targets
 all: $(OBJ_FILES)
