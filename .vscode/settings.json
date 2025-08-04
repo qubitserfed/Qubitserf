@@ -1,6 +1,8 @@
 {
     "files.associations": {
-        "set": "cpp"
+        "set": "cpp",
+        "vector": "cpp",
+        "future": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }

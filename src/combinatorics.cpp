@@ -84,11 +84,17 @@ bool parallel_combinations(int n, int k, std::function<bool(BVector &)> f, int n
         }));
     }
 
+    // todo: rather than wait for all threads to finish, we could return as soon as one thread finds a solution
     for (std::future<bool> &th: threads)
         if (th.get())
             return true;
     return false;
 }
+
+bool parallel_symplectic_combinations(int n, int k, std::function<bool(BVector &)> f, int no_threads) {
+    // todo
+}
+
 
 void symplectic_combinations(int n, int k, std::function<void(std::vector<bool> &) > f) {
     std::vector<bool> stack;

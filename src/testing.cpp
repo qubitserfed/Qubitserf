@@ -2,9 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include <cctype>
 
 #include "linear_algebra.hpp"
 #include "brouwer_zimmerman.hpp"
@@ -97,20 +100,29 @@ int get_middle_distance(BMatrix stab_mat) {
     return std::min(z_dist, x_dist);
 }
 
-std::vector<BMatrix> ben_codes() {
-    std::ifstream fi("testing/d4_codes.txt");
+std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
+    std::ifstream fi(filename);
 
-    std::vector<BMatrix> bencodes;
+    std::vector<std::tuple<BMatrix, int, int>> bencodes;
     std::vector<std::string> code;
     std::string current;
+    int low_bound, high_bound;
 
     while (getline(fi, current)) {
         if (current == "") {
-            bencodes.push_back(bmatrix_conversion(code));
+            bencodes.push_back(std::make_tuple(bmatrix_conversion(code), low_bound, high_bound));
+            low_bound = high_bound = 0;
             code.clear();
         }
         else {
-            code.push_back(current);
+            if (std::any_of(current.begin(), current.end(), [](char c) { return isdigit(c); })) {
+                int n, k;
+                std::istringstream iss(current);
+                iss >> n >> k >> low_bound >> high_bound;
+            }
+            else {
+                code.push_back(current);
+            }
         }
     }
 
@@ -118,23 +130,25 @@ std::vector<BMatrix> ben_codes() {
 }
 
 int main() {
-    auto codes = ben_codes();
-
-    std::ifstream fi("testing/d4_codes.txt");
-    std::vector<std::string> code;
-    std::string line;
-    while (fi >> line) {
-        if (line == "")
-            continue;
-        code.push_back(line);
-    }
+    auto codes = code_list("testing/grassl.txt");
     
     for (auto &code : codes) {
-        std::cout << get_distance_with_parallelized_middle(code, COMPUTE_TYPE{true, false, 64}) << std::endl;
-    }
+        BMatrix code_mat;
+        int low_bound, high_bound, n, k;
+        std::tie(code_mat, low_bound, high_bound) = code;
 
-//    BMatrix codemat = steane_code();
-//    std::cout << get_distance_with_parallelized_middle(codemat) << std::endl;
+        n = code_mat.m / 2;
+        k = code_mat.m / 2 - code_mat.n;
+
+        std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
+        int dist = get_distance_with_middle(code_mat);
+        std::cout << dist << std::endl;
+
+        if ((dist < low_bound || dist > high_bound) && (low_bound != 0 && high_bound != 0)) {
+            std::cout << "Error: " << dist << " " << low_bound << " " << high_bound << std::endl;
+            break;
+        }
+    }
 
     return 0;
 }
