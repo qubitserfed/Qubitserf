@@ -29,7 +29,7 @@ OBJ_FILES_NO_INTERFACE_NO_TEST := $(filter-out $(BUILD_DIR)/interface.o $(BUILD_
 
 # Compile interface.cpp into an executable, linking with all object files except testing.o
 interface: $(BUILD_DIR)/interface.o $(OBJ_FILES_NO_INTERFACE)
-	$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/interface $(BUILD_DIR)/interface.o $(OBJ_FILES_NO_INTERFACE_NO_TEST)
+	$(CXX) -Wall -Wextra -std=c++17 -O3 -ffast-math -pthread -o $(BUILD_DIR)/interface $(BUILD_DIR)/interface.o $(OBJ_FILES_NO_INTERFACE_NO_TEST)
 
 # Compile testing.cpp into an executable, linking with all object files except interface.o
 testing: $(BUILD_DIR)/testing.o $(OBJ_FILES_NO_testing)

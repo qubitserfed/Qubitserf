@@ -6,7 +6,7 @@
 
 #include <cstdlib>
 
-
+#include "utility.hpp"
 #include "linear_algebra.hpp"
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
@@ -103,9 +103,10 @@ int exponential_part_cpu(BMatrix stab_mat, std::vector<BMatrix> transposed_gamma
     return bound;
 }
 
-int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_type) {
+int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
     const int n = code_mat.n;
     const int m = code_mat.m;
+    Printer printer(verbose_flag);
 
     std::vector< std::pair<BMatrix, int> > gamma_seq = brouwer_zimmerman_sequence(code_mat);
     std::vector< BMatrix > transposed_gamma_seq;
@@ -113,8 +114,8 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_t
     for (auto &entry_pair : gamma_seq)
         transposed_gamma_seq.push_back(transpose(entry_pair.first));
 
+    printer(ResetTime());
     int inner_bound = 2e9, outer_bound = -2e9;
-
     for (int d = 1; d <= n; ++d) {
         int weight_d_bound;
 
@@ -135,20 +136,22 @@ int brouwer_zimmerman(BMatrix stab_mat, BMatrix code_mat, COMPUTE_TYPE compute_t
         outer_bound = 0;
         for (auto gen_pair: gamma_seq) {
             const int r = gen_pair.second;
-
             outer_bound+= std::max(0, (d + 1) - (n - r));
         }
 
         if (inner_bound <= outer_bound)
             break;
+        printer(">", inner_bound, ", <", outer_bound, "\n");
+        printer("Elapsed:", Timestamp(), "\n", ResetTime());
     }
 
     return inner_bound;
 
 }
 
-std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
     BMatrix closure_mat, x_stab, z_stab, x_closed, z_closed;
+    Printer printer(verbose_flag);
 
     closure_mat = isotropic_closure(stab_mat);
 
@@ -164,8 +167,11 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type
     z_closed.remove_zeros();
     x_closed.remove_zeros();;
 
-    const int z_dist = brouwer_zimmerman(z_stab, z_closed, compute_type);
-    const int x_dist = brouwer_zimmerman(x_stab, x_closed, compute_type);
+    printer("Z-distance:\n");
+    const int z_dist = brouwer_zimmerman(z_stab, z_closed, compute_type, verbose_flag);
+
+    printer("X-distance:\n");
+    const int x_dist = brouwer_zimmerman(x_stab, x_closed, compute_type, verbose_flag);
 
     return std::make_pair(z_dist, x_dist);
 }
@@ -173,8 +179,8 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type
 
 // input: generator matrix of an arbitrary code
 // output: distance of the code
-int get_distance(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+int get_distance(BMatrix stab_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
     int z_dist, x_dist;
-    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat, compute_type);
+    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat, compute_type, verbose_flag);
     return std::min(z_dist, x_dist);
 }

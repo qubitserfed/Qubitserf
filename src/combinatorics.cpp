@@ -92,35 +92,34 @@ bool parallel_combinations(int n, int k, std::function<bool(BVector &)> f, int n
 }
 
 bool parallel_symplectic_combinations(int n, int k, std::function<bool(BVector &)> f, int no_threads) {
-    return parallel_combinations(2 * n, k, [&] (BVector &comb) {
+    return parallel_combinations(n, k, [&] (BVector &comb) {
         BVector symp_comb(2 * n);
+        std::vector<int> pos;
+        for (int i = 0; i < n; ++i)
+            if (comb.get(i))
+                pos.push_back(i);
 
-        std::function<bool(int)> bkt = [&](int idx) {
-            if (idx == n) {
+        std::function<bool(int)> bkt = [&](int idx) -> bool {
+            if (idx == pos.size())
                 return f(symp_comb);
-            }
 
-            bool res = false;
-            if (comb.get(idx)) {
-                symp_comb.set(2 * idx, 1);
-                symp_comb.set(2 * idx + 1, 0);
-                res|= bkt(idx + 1);
+            symp_comb.set(2 * pos[idx], 1);
+            symp_comb.set(2 * pos[idx] + 1, 0);
+            if (bkt(idx + 1))
+                return true;
+    
 
-                symp_comb.set(2 * idx, 0);
-                symp_comb.set(2 * idx + 1, 1);
-                res|= bkt(idx + 1);
+            symp_comb.set(2 * pos[idx], 0);
+            symp_comb.set(2 * pos[idx] + 1, 1);
+            if (bkt(idx + 1))
+                return true;
 
-                symp_comb.set(2 * idx, 1);
-                symp_comb.set(2 * idx + 1, 1);
-                res|= bkt(idx + 1);
-            }
-            else {
-                symp_comb.set(2 * idx, 0);
-                symp_comb.set(2 * idx + 1, 0);
-                res|= bkt(idx + 1);
-            }
-
-            return res;
+            symp_comb.set(2 * pos[idx], 1);
+            symp_comb.set(2 * pos[idx] + 1, 1);
+            if (bkt(idx + 1))
+                return true;
+            
+            return false;
         };
 
         return bkt(0);
@@ -177,12 +176,12 @@ BVector ith_lexicographic_permutation(int n, int k, u64 num) {
     static u64 c[200][200];
 
     if (!initialized) {
-        initialized = true;
         for (int i = 0; i < 200; ++i)
             c[i][0] = 1;
         for (int i = 1; i < 200; ++i)
             for (int j = 1; j <= i; ++j)
                 c[i][j] = std::min(infty, c[i - 1][j] + c[i - 1][j - 1]);
+        initialized = true;
     }
 
     std::vector<bool> res;
@@ -202,53 +201,52 @@ BVector ith_lexicographic_permutation(int n, int k, u64 num) {
 }
 
 bool advance_iterator(BVector &it) {
-    static bool initialized = false;
-    static u64 first_bits[65];
-    static u64 last_bits[65];
-
-    if (!initialized) {
-        first_bits[0] = last_bits[0] = 0;
-        initialized = true;
-
-        for (int bit = 0; bit < 64; ++bit) {
-            first_bits[bit + 1] = (1ULL << bit) | first_bits[bit];
-            last_bits[bit + 1] = (1ULL << 63 - bit) | last_bits[bit];
-        }
-    }
-
-    /*
-    Algorithm:
-    1) find the last one bit b which doesn't have a one immediately before it
-    2) swap bits b and b - 1
-    3) move all the 1 bits before b to the end of the string 
-    */
-
-    // !!! All the implemented steps can be further optimized !!!
-    // 1)
     const int n = it.n;
+    auto &words = it.vec;
+
+    if (words.size() == 1) {
+        using u64 = uint64_t;
+        u64 x = words[0];
+        if (x == 0)              // no 1's ⇒ no next
+            return false;
+
+        // mask off any bits above n
+        u64 mask = (n < 64) ? ((u64(1) << n) - 1) : ~u64(0);
+        x &= mask;
+
+        u64 u = x & -x;          // lowest 1-bit
+        u64 v = x + u;           // bump that bit
+        if (v & ~mask)           // overflowed past bit n-1?
+            return false;
+
+        // spread the trailing 1's back down
+        u64 w = v | (((v ^ x) / u) >> 2);
+        w &= mask;
+
+        words[0] = w;
+        return true;
+    }
 
     int bit = n, one_count = 0;
     while (bit > 0) {
         if (it.get(bit)) {
-            one_count+= 1;
-        }
-        else {
+            one_count++;
+        } else {
             if (one_count > 0) {
-                bit+= 1;
+                bit++;
                 break;
             }
         }
-        bit-= 1;
+        bit--;
     }
     if (bit == 0)
         return false;
 
-    my_assert(it.get(bit));
-    // 2)
-    it.set(bit - 1, true);
-    it.set(bit, false);
+    // swap at (bit-1, bit)
+    it.set(bit-1, true);
+    it.set(bit,   false);
 
-    // 3)
+    // clear below bit and then set the last one_count-1 bits at the very end
     for (int i = bit; i < n; ++i)
         it.set(i, false);
     for (int i = n - 1; i >= n - one_count + 1; --i)

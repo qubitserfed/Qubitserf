@@ -5,7 +5,7 @@
 #include <set>
 #include <utility>
 
-
+#include "utility.hpp"
 #include "linear_algebra.hpp"
 #include "combinatorics.hpp"
 #include "quantum_utilities.hpp"
@@ -22,8 +22,9 @@ struct SyndromeCell {
     }
 };
 
-int css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
+int css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, bool verbose_flag) {
     const int m = stab_mat.m;
+    Printer printer(verbose_flag);
 
     std::map< BVector, std::set<BVector> > s0, s1;
     s0[BVector(stab_mat.n)].insert(BVector(anticomms.n));
@@ -53,6 +54,8 @@ int css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                 }
             });
 
+            printer("Distance bound: >", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
+
             combinations(m, d, [&] (const std::vector<bool> &v0) {
                 BVector stab_syndome, anticomms_syndrome, v;
                 std::map< BVector, std::set<BVector> >::iterator it;
@@ -77,21 +80,27 @@ int css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                     s0[stab_syndome].insert(anticomms_syndrome);
                 }
             });
+
+            printer("Distance bound: >", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
         }
         catch (int result) {
+            printer("Distance bound: =", result, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return result;
         }
+
     }
 
     return 1;
 }
 
-int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
+int middle_algorithm(BMatrix stab_mat, BMatrix anticomms, bool verbose_flag) {
     const int m = stab_mat.m / 2;
 
+    Printer printer(verbose_flag);
     std::vector<std::pair<u64, u64>> s0, s1;
 
     s0.emplace_back(0, 0);
+    printer(ResetTime());
 
     for (int d = 1; d <= m; ++d) {
         std::swap(s0, s1);
@@ -129,6 +138,8 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                 cnt++;
             });
 
+            printer("Distance bound: >", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
+
             symplectic_combinations(m, d, [&] (const std::vector<bool> &v0) {
                 BVector stab_syndome, anticomms_syndrome, v;
                 std::vector<std::pair<u64, u64>>::iterator it;
@@ -165,14 +176,19 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms) {
                 if (it != s0.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
                     throw 2 * d;
 
-                it++;
+                if (it != s0.end())
+                    it++;
                 if (it != s0.end() && it->first == stab_syndome.vec[0] && it->second != anticomms_syndrome.vec[0])
                     throw 2 * d;
             });
+
+            printer("Distance bound: >", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
         }
         catch (int result) {
+            printer("Distance: =", result, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return result;
         }
+
     }
 
     return 1;
@@ -195,14 +211,23 @@ std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat, bool verbose_
     z_ops.remove_zeros();
     x_ops.remove_zeros();
 
-    const int z_dist = css_middle_algorithm(x_stab, x_ops);
-    const int x_dist = css_middle_algorithm(z_stab, z_ops);
+    if (verbose_flag)
+        std::cout << "z-distance bounds:" << std::endl;
+    const int z_dist = css_middle_algorithm(x_stab, x_ops, verbose_flag);
+    if (verbose_flag)
+        std::cout << "=" << z_dist << std::endl;
+
+    if (verbose_flag)
+        std::cout << "x-distance bounds:" << std::endl;
+    const int x_dist = css_middle_algorithm(z_stab, z_ops, verbose_flag);
+    if (verbose_flag)
+        std::cout << "=" << x_dist << std::endl;
 
     return std::make_pair(z_dist, x_dist);
 }
 
 
-const long long MAX_BUCKETS = 1LL << 25;
+const long long MAX_BUCKETS = 1LL << 20;
 
 u32 hashfn(u64 key) {
     key = key * 0xbf58476d1ce4e5b9ULL;
@@ -261,7 +286,8 @@ struct ParallelHashTable {
     }
 };
 
-int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type) {
+int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type, bool verbose_flag) {
+    Printer printer(verbose_flag);
     const int m = stab_mat.m / 2;
 
     ParallelHashTable *s0, *s1;
@@ -271,6 +297,7 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
     s0->insert(BVector(stab_mat.n), BVector(anticomms.n));
 
     for (int d = 1; d <= m; ++d) {
+        std::cout << "d = " << d << std::endl;
         std::swap(s0, s1);
         s0->clear();
 
@@ -297,8 +324,11 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
         if (res) {
             delete s0;
             delete s1;
+            printer("Distance: =", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return 2 * d - 1;
         }
+
+        printer("Distance bound: >", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
 
         res = parallel_symplectic_combinations(m, d, [&] (BVector &v) -> bool {
             BVector stab_syndome, anticomms_syndrome;
@@ -319,8 +349,11 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
         if (res) {
             delete s0;
             delete s1;
+            printer("Distance: =", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return 2 * d;
         }
+
+        printer("Distance bound: >", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
     }
 
     delete s0;
@@ -328,8 +361,10 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
     return 1;
 }
 
-int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type) {
+int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type, bool verbose_flag) {
     const int m = stab_mat.m;
+
+    Printer printer(verbose_flag);
 
     ParallelHashTable *s0, *s1;
     s0 = new ParallelHashTable();
@@ -354,8 +389,11 @@ int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_T
         if (found) {
             delete s0;
             delete s1;
+            printer("Distance: =", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return 2 * d - 1;
         }
+
+        printer("Distance bound: >", 2 * d - 1, "\nElapsed:", Timestamp(), "\n", ResetTime());
 
         found = parallel_combinations(m, d, [&] (BVector &v) {
             BVector stab_syndome = transposed_product(v, stab_mat);
@@ -366,8 +404,11 @@ int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_T
         if (found) {
             delete s0;
             delete s1;
+            printer("Distance: =", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
             return 2 * d;
         }
+
+        printer("Distance bound: >", 2 * d, "\nElapsed:", Timestamp(), "\n", ResetTime());
     }
 
     delete s0;
@@ -375,8 +416,9 @@ int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_T
     return 1;
 }
 
-std::pair<int, int> get_zx_distances_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+std::pair<int, int> get_zx_distances_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
     BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
+    Printer printer(verbose_flag);
 
     closure_mat = logical_operators(stab_mat);
 
@@ -392,30 +434,33 @@ std::pair<int, int> get_zx_distances_with_parallelized_middle(BMatrix stab_mat, 
     z_ops.remove_zeros();
     x_ops.remove_zeros();
 
-    const int z_dist = parallel_css_middle_algorithm(x_stab, x_ops, compute_type);
-    const int x_dist = parallel_css_middle_algorithm(z_stab, z_ops, compute_type);
+    printer("Z-distance:", "\n");
+    const int z_dist = parallel_css_middle_algorithm(x_stab, x_ops, compute_type, verbose_flag);
+
+    printer("X-distance:", "\n");
+    const int x_dist = parallel_css_middle_algorithm(z_stab, z_ops, compute_type, verbose_flag);
 
     return std::make_pair(z_dist, x_dist);
 }
 
-int get_distance_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type) {
+int get_distance_with_parallelized_middle(BMatrix stab_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
     if (is_css(stab_mat)) {
         int z_dist, x_dist;
-        std::tie(z_dist, x_dist) = get_zx_distances_with_parallelized_middle(stab_mat, compute_type);
+        std::tie(z_dist, x_dist) = get_zx_distances_with_parallelized_middle(stab_mat, compute_type, verbose_flag);
         return std::min(z_dist, x_dist);
     }
     else {
-        return parallel_middle_algorithm(stab_mat, logical_operators(stab_mat), compute_type);
+        return parallel_middle_algorithm(stab_mat, logical_operators(stab_mat), compute_type, verbose_flag);
     }
 }
 
-int get_distance_with_middle(BMatrix stab_mat) {
+int get_distance_with_middle(BMatrix stab_mat, bool verbose_flag) {
     if (is_css(stab_mat)) {
         int z_dist, x_dist;
-        std::tie(z_dist, x_dist) = get_zx_distances_with_middle(stab_mat);
+        std::tie(z_dist, x_dist) = get_zx_distances_with_middle(stab_mat, verbose_flag);
         return std::min(z_dist, x_dist);
     }
     else {
-        return middle_algorithm(stab_mat, logical_operators(stab_mat));
+        return middle_algorithm(stab_mat, logical_operators(stab_mat), verbose_flag);
     }
 }
