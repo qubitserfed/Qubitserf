@@ -68,7 +68,7 @@ bool parallel_combinations(int n, int k, std::function<bool(BVector &)> f, int n
     for (int i = 0; i <= no_threads; ++i)
         delimiters.push_back(i * no_combinations / no_threads);
 
-    ith_lexicographic_permutation(1, 1, 0);
+    ith_lexicographic_permutation(1, 1, 0); // initializes the internal static table, do not remove
     for (int i = 1; i < delimiters.size(); ++i) {
         int iv_start = delimiters[i - 1];
         int iv_end = delimiters[i];

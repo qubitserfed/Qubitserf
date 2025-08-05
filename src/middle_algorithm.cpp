@@ -4,6 +4,7 @@
 #include <mutex>
 #include <set>
 #include <utility>
+#include <memory>
 
 #include "utility.hpp"
 #include "linear_algebra.hpp"
@@ -224,9 +225,10 @@ std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat, bool verbose_
 
 const long long MAX_BUCKETS = 1LL << 25;
 
+
 struct ParallelHashTable {
     std::vector<std::pair<BVector, BVector>> *table;
-    std::vector<std::mutex> mutexes;
+    std::unique_ptr<std::mutex[]> mutexes;
 
     int no_buckets, MASK;
 
@@ -245,12 +247,12 @@ struct ParallelHashTable {
         return key;
     }
 
-    ParallelHashTable() : mutexes(MAX_BUCKETS) {
+    ParallelHashTable() : table(nullptr) {
         reset(16);
     }
 
     bool insert(const BVector &key, const BVector &value) { // returns true if the key was already present with a different value
-        u32 hash = hashfn(key) % MAX_BUCKETS;
+        u32 hash = hashfn(key);
         std::lock_guard<std::mutex> lock(mutexes[hash]);
         for (auto &pair : table[hash]) {
             if (pair.first == key) {
@@ -265,7 +267,7 @@ struct ParallelHashTable {
     }
 
     bool find(const BVector &key, const BVector &value) {
-        u32 hash = hashfn(key) % MAX_BUCKETS;
+        u32 hash = hashfn(key);
         std::lock_guard<std::mutex> lock(mutexes[hash]);
         for (auto &pair : table[hash]) {
             if (pair.first == key && pair.second != value) {
@@ -283,10 +285,11 @@ struct ParallelHashTable {
         no_buckets = 1 << pow2;
         MASK = no_buckets - 1;
         table = new std::vector<std::pair<BVector, BVector>>[no_buckets];
+        mutexes = std::make_unique<std::mutex[]>(no_buckets);
     }
 
     void clear() {
-        for (int i = 0; i < MAX_BUCKETS; ++i)
+        for (int i = 0; i < no_buckets; ++i)
             table[i].clear();
     }
 };
