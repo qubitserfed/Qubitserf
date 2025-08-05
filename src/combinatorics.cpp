@@ -204,7 +204,7 @@ bool advance_iterator(BVector &it) {
     const int n = it.n;
     auto &words = it.vec;
 
-    if (words.size() == 1) {
+    if ((words[0] & -words[0]) + words[0] != 0) {
         using u64 = uint64_t;
         u64 x = words[0];
         if (x == 0)              // no 1's ⇒ no next
