@@ -196,6 +196,7 @@ int middle_algorithm(BMatrix stab_mat, BMatrix anticomms, bool verbose_flag) {
 
 std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat, bool verbose_flag) {
     BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
+    Printer printer(verbose_flag);
 
     closure_mat = logical_operators(stab_mat);
 
@@ -211,48 +212,42 @@ std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat, bool verbose_
     z_ops.remove_zeros();
     x_ops.remove_zeros();
 
-    if (verbose_flag)
-        std::cout << "z-distance bounds:" << std::endl;
+    printer("Z-distance:\n");
     const int z_dist = css_middle_algorithm(x_stab, x_ops, verbose_flag);
-    if (verbose_flag)
-        std::cout << "=" << z_dist << std::endl;
 
-    if (verbose_flag)
-        std::cout << "x-distance bounds:" << std::endl;
+    printer("X-distance:\n");
     const int x_dist = css_middle_algorithm(z_stab, z_ops, verbose_flag);
-    if (verbose_flag)
-        std::cout << "=" << x_dist << std::endl;
 
     return std::make_pair(z_dist, x_dist);
 }
 
 
-const long long MAX_BUCKETS = 1LL << 20;
-
-u32 hashfn(u64 key) {
-    key = key * 0xbf58476d1ce4e5b9ULL;
-    key = key ^ (key >> 32);
-    key = key * 0xbf58476d1ce4e5b9ULL;
-    key = key ^ (key >> 32);
-    key = key * 0xbf58476d1ce4e5b9ULL;
-    if (MAX_BUCKETS == 1LL << 32) // compile time constant
-        return key;
-    else
-        return key % MAX_BUCKETS;
-}
-
-u32 hashfn(const BVector &v) {
-    u64 key = 0;
-    for (int i = 0; i < v.vec.size(); ++i)
-        key = key + hashfn(v.vec[i]);
-    return key;
-}
+const long long MAX_BUCKETS = 1LL << 25;
 
 struct ParallelHashTable {
-    std::vector<std::pair<BVector, BVector>> table[MAX_BUCKETS];
+    std::vector<std::pair<BVector, BVector>> *table;
     std::vector<std::mutex> mutexes;
-    
-    ParallelHashTable() : mutexes(MAX_BUCKETS) {}
+
+    int no_buckets, MASK;
+
+    // hash function from https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+    u32 hashfn(u64 key) {
+        key = key * 0xbf58476d1ce4e5b9ULL;
+        key = key ^ (key >> 32);
+        key = key * 0xbf58476d1ce4e5b9ULL;
+        return key & MASK;
+    }
+
+    u32 hashfn(const BVector &v) {
+        u64 key = 0;
+        for (int i = 0; i < v.vec.size(); ++i)
+            key = hashfn(key + v.vec[i]);
+        return key;
+    }
+
+    ParallelHashTable() : mutexes(MAX_BUCKETS) {
+        reset(16);
+    }
 
     bool insert(const BVector &key, const BVector &value) { // returns true if the key was already present with a different value
         u32 hash = hashfn(key) % MAX_BUCKETS;
@@ -280,6 +275,16 @@ struct ParallelHashTable {
         return false;
     }
 
+    void reset(int pow2) {
+        if (table != nullptr) {
+            delete[] table;
+            table = nullptr;
+        }
+        no_buckets = 1 << pow2;
+        MASK = no_buckets - 1;
+        table = new std::vector<std::pair<BVector, BVector>>[no_buckets];
+    }
+
     void clear() {
         for (int i = 0; i < MAX_BUCKETS; ++i)
             table[i].clear();
@@ -297,9 +302,26 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
     s0->insert(BVector(stab_mat.n), BVector(anticomms.n));
 
     for (int d = 1; d <= m; ++d) {
-        std::cout << "d = " << d << std::endl;
         std::swap(s0, s1);
-        s0->clear();
+        
+        double approx_combinations = 1;
+        int bucket_pow2 = 0;
+        for (int i = 1; i <= d; ++i)
+            approx_combinations = approx_combinations * (m - i + 1) / i * 3;
+
+        if (approx_combinations > 2e9) {
+            bucket_pow2 = 25;
+        }
+        else {
+            while (approx_combinations > 1.5) {
+                approx_combinations /= 2;
+                bucket_pow2+= 1;
+            }
+            bucket_pow2 = std::max(16, std::min(25, bucket_pow2));
+        }
+
+        s0->reset(bucket_pow2);
+
 
         bool res = false;
 
