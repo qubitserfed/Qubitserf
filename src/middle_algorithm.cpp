@@ -4,7 +4,6 @@
 #include <mutex>
 #include <set>
 #include <utility>
-#include <memory>
 
 #include "utility.hpp"
 #include "linear_algebra.hpp"
@@ -223,76 +222,7 @@ std::pair<int, int> get_zx_distances_with_middle(BMatrix stab_mat, bool verbose_
 }
 
 
-const long long MAX_BUCKETS = 1LL << 25;
-
-
-struct ParallelHashTable {
-    std::vector<std::pair<BVector, BVector>> *table;
-    std::unique_ptr<std::mutex[]> mutexes;
-
-    int no_buckets, MASK;
-
-    // hash function from https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-    u32 hashfn(u64 key) {
-        key = key * 0xbf58476d1ce4e5b9ULL;
-        key = key ^ (key >> 32);
-        key = key * 0xbf58476d1ce4e5b9ULL;
-        return key & MASK;
-    }
-
-    u32 hashfn(const BVector &v) {
-        u64 key = 0;
-        for (int i = 0; i < v.vec.size(); ++i)
-            key = hashfn(key + v.vec[i]);
-        return key;
-    }
-
-    ParallelHashTable() : table(nullptr) {
-        reset(16);
-    }
-
-    bool insert(const BVector &key, const BVector &value) { // returns true if the key was already present with a different value
-        u32 hash = hashfn(key);
-        std::lock_guard<std::mutex> lock(mutexes[hash]);
-        for (auto &pair : table[hash]) {
-            if (pair.first == key) {
-                if (pair.second != value) {
-                    return true;
-                }
-                return false;
-            }
-        }
-        table[hash].emplace_back(key, value);
-        return false;
-    }
-
-    bool find(const BVector &key, const BVector &value) {
-        u32 hash = hashfn(key);
-        std::lock_guard<std::mutex> lock(mutexes[hash]);
-        for (auto &pair : table[hash]) {
-            if (pair.first == key && pair.second != value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void reset(int pow2) {
-        if (table != nullptr) {
-            delete[] table;
-            table = nullptr;
-        }
-        no_buckets = 1 << pow2;
-        MASK = no_buckets - 1;
-        table = new std::vector<std::pair<BVector, BVector>>[no_buckets];
-        mutexes = std::make_unique<std::mutex[]>(no_buckets);
-    }
-
-    void clear() {
-        for (int i = 0; i < no_buckets; ++i)
-            table[i].clear();
-    }
-};
+// START OF PARALLEL ALGORITHMS --------------------------------------------------------------------------------
 
 int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type, bool verbose_flag) {
     Printer printer(verbose_flag);
@@ -400,6 +330,24 @@ int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_T
         std::swap(s0, s1);
         s0->clear();
 
+        double approx_combinations = 1;
+        int bucket_pow2 = 0;
+        for (int i = 1; i <= d; ++i)
+            approx_combinations = approx_combinations * (m - i + 1) / i * 3;
+
+        if (approx_combinations > 2e9) {
+            bucket_pow2 = 25;
+        }
+        else {
+            while (approx_combinations > 0.5) {
+                approx_combinations /= 2;
+                bucket_pow2+= 1;
+            }
+            bucket_pow2 = std::max(16, std::min(25, bucket_pow2));
+        }
+
+        s0->reset(bucket_pow2);
+
         bool found = false;
         found = parallel_combinations(m, d, [&] (BVector &v) {
             BVector stab_syndome = transposed_product(v, stab_mat);
@@ -489,3 +437,6 @@ int get_distance_with_middle(BMatrix stab_mat, bool verbose_flag) {
         return middle_algorithm(stab_mat, logical_operators(stab_mat), verbose_flag);
     }
 }
+
+
+// operator weight algorithms

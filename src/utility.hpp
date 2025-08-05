@@ -4,6 +4,11 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <memory>
+
+#include "linear_algebra.hpp"
+#include "combinatorics.hpp"
+
 
 struct Timestamp {};
 struct ResetTime {};
@@ -64,4 +69,29 @@ struct Printer {
 
     Printer() : last_print_time(clock::now()), silent(false) {}
     Printer(bool not_silent) : last_print_time(clock::now()), silent(!not_silent) {}
+};
+
+using u32 = unsigned int;
+using u64 = unsigned long long;
+
+struct ParallelHashTable {
+    std::vector<std::pair<BVector, BVector>> *table;
+    std::unique_ptr<std::mutex[]> mutexes;
+
+    int no_buckets, MASK;
+
+    // hash function from https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+    u32 hashfn(u64);
+
+    u32 hashfn(const BVector &);
+
+    ParallelHashTable();
+
+    bool insert(const BVector &key, const BVector &value);
+
+    bool find(const BVector &key, const BVector &value);
+
+    void reset(int pow2);
+
+    void clear();
 };

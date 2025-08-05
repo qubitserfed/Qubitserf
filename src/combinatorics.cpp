@@ -126,7 +126,6 @@ bool parallel_symplectic_combinations(int n, int k, std::function<bool(BVector &
     }, no_threads);
 }
 
-
 void symplectic_combinations(int n, int k, std::function<void(std::vector<bool> &) > f) {
     std::vector<bool> stack;
     stack.reserve(2 * n);
