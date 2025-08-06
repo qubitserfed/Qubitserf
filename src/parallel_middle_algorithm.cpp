@@ -78,7 +78,7 @@ int parallel_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE 
 
 int parallel_css_middle_algorithm(BMatrix stab_mat, BMatrix anticomms, COMPUTE_TYPE compute_type, bool verbose_flag) {
     Printer printer(verbose_flag);
-    const int m = stab_mat.m / 2;
+    const int m = stab_mat.m;
 
     ParallelHashTable *s0, *s1;
     s0 = new ParallelHashTable();

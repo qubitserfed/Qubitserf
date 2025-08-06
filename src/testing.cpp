@@ -100,7 +100,7 @@ int get_algorithm_distance(BMatrix stab_mat) { // not to be used, it's here as a
     const int z_dist = -1;
     const int x_dist = -1;
 */
-    return parallel_middle_algorithm(stab_mat, logical_operators(stab_mat), COMPUTE_TYPE { true, false, 1 }, true);
+    return parallel_middle_algorithm(stab_mat, logical_operators(stab_mat), COMPUTE_TYPE { true, false, 1024 }, false);
 }
 
 std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
@@ -133,7 +133,7 @@ std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
 }
 
 int main() {
-    auto codes = code_list("testing/grassl.txt");
+    auto codes = code_list("testing/d4_codes.txt");
     
     for (auto &code : codes) {
         BMatrix code_mat;
@@ -144,7 +144,7 @@ int main() {
         k = code_mat.m / 2 - code_mat.n;
 
         std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
-        int dist = get_algorithm_distance(code_mat);
+        int dist = get_distance(code_mat, MIDDLE_ALGORITHM, COMPUTE_TYPE { true, false, 1024 }, false);
         std::cout << dist << std::endl;
 
         if ((dist < low_bound || dist > high_bound) && (low_bound != 0 && high_bound != 0)) {
