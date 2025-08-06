@@ -194,3 +194,29 @@ BMatrix logical_operators(BMatrix v_base) {
 
     return result;
 }
+
+std::pair<BMatrix, BMatrix> css_destabilizers(BMatrix stab_mat) {
+    BMatrix logical_ops = logical_operators(stab_mat);
+
+    BMatrix z_stab, x_stab;
+    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+
+    BMatrix z_log, x_log;
+    std::tie(z_log, x_log) = zx_parts(logical_ops);
+
+    BMatrix z_total, x_total;
+    z_total = z_stab;
+    for (int i = 0; i < z_log.n; ++i)
+        z_total.append_row(z_log.row(i));
+    x_total = x_stab;
+    for (int i = 0; i < x_log.n; ++i)
+        x_total.append_row(x_log.row(i));
+
+    BMatrix z_destab, x_destab;
+    z_destab = basis_completion(z_total);
+    x_destab = basis_completion(x_total);
+
+
+
+    return std::make_pair(z_destab, x_destab);
+}

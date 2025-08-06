@@ -18,6 +18,7 @@ struct BVector {
     bool is_zero();
     void set(int , bool);
     int weight();
+    void resize(int);
 
     BVector();
     BVector(int);
@@ -70,3 +71,4 @@ BMatrix             basis_completion                (BMatrix);
 constexpr u64       raw_sym_prod_ll                 (const u64 &, const u64&);
 bool                sym_prod                        (BVector, BVector);
 BMatrix             isotropic_closure               (BMatrix);
+BVector             shift_left                      (BVector, int);

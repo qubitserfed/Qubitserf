@@ -9,10 +9,7 @@
 #include <cstring>
 
 #include "linear_algebra.hpp"
-#include "combinatorics.hpp"
-#include "quantum_utilities.hpp"
-#include "brouwer_zimmerman.hpp"
-#include "middle_algorithm.hpp"
+#include "get_distance.hpp"
 
 using u64 = unsigned long long;
 
@@ -53,27 +50,14 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
     return result;
 }
 
-int main(int argc, char **argv) {
-    std::string current;
-    std::vector<std::string> code_strs;
-    std::vector< std::string > argv_flags;
-    COMPUTE_TYPE compute_type;
+void parse_arguments(int argc, char **argv, BMatrix &code, ALGORITHMS &algorithm, COMPUTE_TYPE &compute_type, bool &verbose_flag, bool &zx_flag) {
+    std::vector<std::string> argv_flags;
     std::vector<std::string>::iterator it;
-    bool zx_flag = false, bz_flag = false, verbose_flag = false, parallel_flag = false;
 
-    compute_type = (COMPUTE_TYPE) {
-        true,
-        false,
-        1
-    };
-
-    while (getline(std::cin, current)) {
-        if (current == "")
-            break;
-        code_strs.push_back(current);
-    }
-
-    BMatrix code = bmatrix_conversion(code_strs);
+    algorithm = MIDDLE_ALGORITHM;
+    compute_type = (COMPUTE_TYPE) { true, false, 1 };
+    verbose_flag = false;
+    zx_flag = false;
 
     for (int i = 1; i < argc; ++i)
         argv_flags.push_back( std::string(argv[i]) );
@@ -84,7 +68,7 @@ int main(int argc, char **argv) {
             std :: cerr << "The Brouwer-Zimmerman Algorithm does not currently support non-CSS codes!\n";
             exit(1);
         }
-        bz_flag = true;
+        algorithm = BROUWER_ZIMMERMAN_ALGORITHM;
     }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--zx");
@@ -98,11 +82,8 @@ int main(int argc, char **argv) {
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--threads");
     if (it != argv_flags.end()) {
-        parallel_flag = true;
-
         it++;
         if (it != argv_flags.end()) {
-            // Check that *it is a number
             if ((*it).empty() || !std::all_of((*it).begin(), (*it).end(), ::isdigit) || std::stoi(*it) <= 0) {
                 std::cerr << "--threads flag must be followed by a positive integer!\n";
                 exit(1);
@@ -124,75 +105,44 @@ int main(int argc, char **argv) {
     if (it != argv_flags.end()) {
         verbose_flag = true;
     }
+}
 
+
+
+int main(int argc, char **argv) {
+    BMatrix code;
+    ALGORITHMS algorithm;
+    COMPUTE_TYPE compute_type;
+    bool zx_flag, verbose_flag;
+
+    // Read code from stdin
+    std::string current;
+    std::vector<std::string> code_strs;
+    while (std::getline(std::cin, current)) {
+        if (current == "")
+            break;
+        code_strs.push_back(current);
+    }
+    code = bmatrix_conversion(code_strs);
+
+    // Parse command line arguments
+    parse_arguments(argc, argv, code, algorithm, compute_type, verbose_flag, zx_flag);
+
+    // Do the work
     if (zx_flag) {
-        int z_dist, x_dist;
-        if (parallel_flag) {
-            if (bz_flag) {
-                if (verbose_flag)
-                    get_zx_distances(code, compute_type, verbose_flag);
-                else {
-                    std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type, verbose_flag);
-                    std::cout << z_dist << ' ' << x_dist << std::endl;
-                }
-            }
-            else {
-                if (verbose_flag)
-                    get_zx_distances_with_parallelized_middle(code, compute_type, verbose_flag);
-                else {
-                    std::tie(z_dist, x_dist) = get_zx_distances_with_parallelized_middle(code, compute_type, verbose_flag);
-                    std::cout << z_dist << ' ' << x_dist << std::endl;
-                }
-            }
-        }
+        if (verbose_flag)
+            get_zx_distances(code, algorithm, compute_type, verbose_flag);
         else {
-            if (bz_flag) {
-                if (verbose_flag)
-                    get_zx_distances(code, compute_type, verbose_flag);
-                else {
-                    std::tie(z_dist, x_dist) = get_zx_distances(code, compute_type, verbose_flag);
-                    std::cout << z_dist << ' ' << x_dist << std::endl;
-                }
-            }
-            else {
-                if (verbose_flag)
-                    get_zx_distances_with_middle(code, verbose_flag);
-                else {
-                    std::tie(z_dist, x_dist) = get_zx_distances_with_middle(code, verbose_flag);
-                    std::cout << z_dist << ' ' << x_dist << std::endl;
-                }
-            }
+            int z_dist, x_dist;
+            std::tie(z_dist, x_dist) = get_zx_distances(code, algorithm, compute_type, verbose_flag);
+            std::cout << z_dist << ' ' << x_dist << std::endl;
         }
     }
     else {
-        if (parallel_flag) {
-            if (bz_flag) {
-                if (verbose_flag)
-                    get_distance(code, compute_type, verbose_flag);
-                else
-                    std::cout << get_distance(code, compute_type, verbose_flag) << std::endl;
-            }
-            else {
-                if (verbose_flag)
-                    get_distance_with_parallelized_middle(code, compute_type, verbose_flag);
-                else
-                    std::cout << get_distance_with_parallelized_middle(code, compute_type, verbose_flag) << std :: endl;
-            }
-        }
-        else {
-            if (bz_flag) {
-                if (verbose_flag)
-                    get_distance(code, compute_type, verbose_flag);
-                else
-                    std::cout << get_distance(code, compute_type, verbose_flag) << std::endl;
-            }
-            else {
-                if (verbose_flag)
-                    get_distance_with_middle(code, verbose_flag);
-                else
-                    std::cout << get_distance_with_middle(code, verbose_flag) << std :: endl;
-            }
-        }
+        if (verbose_flag)
+            get_distance(code, algorithm, compute_type, verbose_flag);
+        else
+            std::cout << get_distance(code, algorithm, compute_type, verbose_flag) << std::endl;
     }
 
     return 0;

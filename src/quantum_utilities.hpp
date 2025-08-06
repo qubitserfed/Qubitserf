@@ -20,3 +20,4 @@ std::pair<BMatrix, BMatrix> zx_parts                        (BMatrix);
 BMatrix                     logical_operators               (BMatrix);
 int                         symplectic_weight               (BVector);
 bool                        is_css                          (BMatrix);
+std::pair<BMatrix, BMatrix> css_destabilizers               (BMatrix);

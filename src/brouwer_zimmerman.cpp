@@ -175,12 +175,3 @@ std::pair<int, int> get_zx_distances(BMatrix stab_mat, COMPUTE_TYPE compute_type
 
     return std::make_pair(z_dist, x_dist);
 }
-
-
-// input: generator matrix of an arbitrary code
-// output: distance of the code
-int get_distance(BMatrix stab_mat, COMPUTE_TYPE compute_type, bool verbose_flag) {
-    int z_dist, x_dist;
-    std::tie(z_dist, x_dist) = get_zx_distances(stab_mat, compute_type, verbose_flag);
-    return std::min(z_dist, x_dist);
-}

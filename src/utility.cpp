@@ -50,6 +50,25 @@ void ParallelHashTable::reset(int pow2) {
     mutexes = std::make_unique<std::mutex[]>(no_buckets);
 }
 
+void ParallelHashTable::reset_for_code(int n, int td, bool css) {
+    double approx_combinations = 1;
+    int bucket_pow2 = 0;
+    for (int i = 1; i <= td; ++i)
+        approx_combinations = approx_combinations * (n - i + 1) / i * 3;
+
+    if (approx_combinations > 2e9) {
+        bucket_pow2 = 25;
+    }
+    else {
+        while (approx_combinations > 0.5) {
+            approx_combinations /= 2; 
+            bucket_pow2+= 1;
+        }
+        bucket_pow2 = std::max(16, std::min(25, bucket_pow2));
+    }
+    reset(bucket_pow2);
+}
+
 void ParallelHashTable::clear() {
     for (int i = 0; i < no_buckets; ++i)
         table[i].clear();

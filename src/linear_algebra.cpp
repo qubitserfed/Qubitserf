@@ -76,9 +76,59 @@ BVector::BVector(std::vector<bool> v) {
         set(i, v[i]);
 }
 
+void BVector::resize(int _n) {
+    n = _n;
+    vec.resize((n + 63) / 64);
+    // Pad the remainder of the last bucket with zeros
+    if (n > 0 && (n % 64) != 0) {
+        int last_bucket = vec.size() - 1;
+        int bits_in_last = n % 64;
+        u64 mask = (1ULL << bits_in_last) - 1;
+        vec[last_bucket] &= mask;
+    }
+}
+
+BVector shift_left(BVector vec, int shift_amount) {
+    my_assert(shift_amount >= 0);
+
+    if (shift_amount == 0)
+        return vec;
+
+    u64 carry = 0;
+    int buckets = vec.no_buckets();
+    int shift_words = shift_amount / 64;
+    int shift_bits = shift_amount % 64;
+
+    if (shift_words > 0) {
+        for (int i = buckets - 1; i >= 0; --i) {
+            u64 val = 0;
+            if (i - shift_words >= 0)
+                vec.vec[i] = vec.vec[i - shift_words];
+            else
+                vec.vec[i] = 0;
+        }
+    }
+
+    if (shift_bits > 0) {
+        for (int i = 0; i < buckets; ++i) {
+            u64 new_carry = (vec.vec[i] >> (64 - shift_bits));
+            vec.vec[i] = (vec.vec[i] << shift_bits) | carry;
+            carry = new_carry;
+        }
+    }
+
+    // Clean the remaining bits in the last bucket
+    if (vec.n > 0 && (vec.n % 64) != 0) {
+        int last_bucket = vec.vec.size() - 1;
+        int bits_in_last = vec.n % 64;
+        u64 mask = (1ULL << bits_in_last) - 1;
+        vec.vec[last_bucket] &= mask;
+    }
+    return vec;
+}
+
 void print(BVector vec) {
     const int n = vec.n;
-
     for (int i = 0; i < n; ++i)
         std::cout << vec.get(i) << " \n"[i == n - 1];
 }

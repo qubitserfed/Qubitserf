@@ -93,5 +93,7 @@ struct ParallelHashTable {
 
     void reset(int pow2);
 
+    void reset_for_code(int, int, bool);
+
     void clear();
 };
