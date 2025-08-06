@@ -12,6 +12,8 @@
 #include "linear_algebra.hpp"
 #include "brouwer_zimmerman.hpp"
 #include "get_distance.hpp"
+#include "singlethread_middle_algorithm.hpp"
+#include "parallel_middle_algorithm.hpp"
 
 BMatrix steane_code() {
     const int n = 6;
@@ -78,6 +80,7 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
 }
 
 int get_algorithm_distance(BMatrix stab_mat) { // not to be used, it's here as a template for testing specific algorithm implementations
+/*
     BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
 
     closure_mat = logical_operators(stab_mat);
@@ -96,8 +99,8 @@ int get_algorithm_distance(BMatrix stab_mat) { // not to be used, it's here as a
 
     const int z_dist = -1;
     const int x_dist = -1;
-
-    return std::min(z_dist, x_dist);
+*/
+    return parallel_middle_algorithm(stab_mat, logical_operators(stab_mat), COMPUTE_TYPE { true, false, 1 }, true);
 }
 
 std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
@@ -140,11 +143,8 @@ int main() {
         n = code_mat.m / 2;
         k = code_mat.m / 2 - code_mat.n;
 
-        if (n <= 30)
-            continue;
-
         std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
-        int dist = get_distance(code_mat, MIDDLE_ALGORITHM, COMPUTE_TYPE { true, false, 1024 }, true);
+        int dist = get_algorithm_distance(code_mat);
         std::cout << dist << std::endl;
 
         if ((dist < low_bound || dist > high_bound) && (low_bound != 0 && high_bound != 0)) {

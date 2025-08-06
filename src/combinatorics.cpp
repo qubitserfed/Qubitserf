@@ -184,14 +184,16 @@ BVector ith_lexicographic_permutation(int n, int k, u64 num) {
     }
 
     std::vector<bool> res;
-    for (int i = 0; i < n; ++i) { // VERIFY
-        if (c[n - i - 1][k] > num) {
-            res.push_back(0);
+    for (int i = 0; i < n; ++i) {
+        u64 one_block = c[n - i - 1][k - 1];
+        if (k > 0 && num < one_block) {
+            res.push_back(1);
+            --k;
         }
         else {
-            num-= c[n - i - 1][k];
-            k-= 1;
-            res.push_back(1);
+            if (k > 0)
+                num -= one_block;
+            res.push_back(0);
         }
     }
     my_assert(k == 0);

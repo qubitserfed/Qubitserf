@@ -87,6 +87,8 @@ struct ParallelHashTable {
 
     ParallelHashTable();
 
+    bool search(const BVector &key, const BVector &value);
+
     bool insert(const BVector &key, const BVector &value);
 
     bool find(const BVector &key, const BVector &value);

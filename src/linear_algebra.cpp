@@ -13,6 +13,7 @@ void my_assert(bool arg) {
 }
 
 int popcount(u64 num) {
+    return __builtin_popcountll(num);
     const u64 masks[] = {
         0x5555555555555555ULL,
         0x3333333333333333ULL,

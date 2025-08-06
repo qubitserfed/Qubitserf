@@ -28,11 +28,23 @@ bool ParallelHashTable::insert(const BVector &key, const BVector &value) {
     return false;
 }
 
-bool ParallelHashTable::find(const BVector &key, const BVector &value) {
+
+bool ParallelHashTable::search(const BVector &key, const BVector &value) {
     u32 hash = hashfn(key);
     std::lock_guard<std::mutex> lock(mutexes[hash]);
     for (auto &pair : table[hash]) {
         if (pair.first == key && pair.second != value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ParallelHashTable::find(const BVector &key, const BVector &value) {
+    u32 hash = hashfn(key);
+    std::lock_guard<std::mutex> lock(mutexes[hash]);
+    for (auto &pair : table[hash]) {
+        if (pair.first == key && pair.second == value) {
             return true;
         }
     }
