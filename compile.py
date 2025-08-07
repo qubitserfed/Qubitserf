@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
         if os.path.isfile(os.path.join('src', file)) and file_ext=='.cpp':
             os.system(f'g++ -c {cflags} src/{file} -o build/{file_name}.o')
-            if not file_name in ['testing', 'interface', 'library']:
+            if not file_name in ['testing', 'interface',]:
                 library_objs.append(file_name + '.o')
 
     library_deps = " ".join(map(lambda filename: "build/" + filename, library_objs))
@@ -25,5 +25,3 @@ if __name__ == "__main__":
     # build tester
     os.system(f'g++ {cflags} {library_deps} build/testing.o -o build/testing')
 
-    # build c library
-    os.system(f'g++ -c {cflags} {library_deps} build/library.o -o build/library')

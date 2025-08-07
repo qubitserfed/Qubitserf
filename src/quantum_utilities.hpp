@@ -16,8 +16,9 @@ void                        iterate_words_of_weight         (int, int, std::func
 int                         bruteforce_distance0            (BMatrix);
 int                         bruteforce_distance1            (BMatrix);
 std::pair<int, int>         bruteforce_zx_distance0         (BMatrix);
+std::pair<BVector, BVector> zx_parts                        (BVector);
 std::pair<BMatrix, BMatrix> zx_parts                        (BMatrix);
 BMatrix                     logical_operators               (BMatrix);
 int                         symplectic_weight               (BVector);
 bool                        is_css                          (BMatrix);
-std::pair<BMatrix, BMatrix> css_destabilizers               (BMatrix);
+BMatrix                     destabilizers                   (BMatrix, BMatrix);

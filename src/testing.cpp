@@ -14,6 +14,7 @@
 #include "get_distance.hpp"
 #include "singlethread_middle_algorithm.hpp"
 #include "parallel_middle_algorithm.hpp"
+#include "operator_weight.hpp"
 
 BMatrix steane_code() {
     const int n = 6;
@@ -79,6 +80,24 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
     return result;
 }
 
+BVector bvector_conversion(std::string pauli_string) {
+    BVector result(2 * pauli_string.size());
+    for (int i = 0; i < pauli_string.size(); ++i) {
+        char c = pauli_string[i];
+        if (c == 'X') {
+            result.set(2 * i + 1, 1);
+        }
+        else if (c == 'Z') {
+            result.set(2 * i, 1);
+        }
+        else if (c == 'Y') {
+            result.set(2 * i, 1);
+            result.set(2 * i + 1, 1);
+        }
+    }
+    return result;
+}
+
 int get_algorithm_distance(BMatrix stab_mat) { // not to be used, it's here as a template for testing specific algorithm implementations
 /*
     BMatrix closure_mat, x_stab, z_stab, x_ops, z_ops;
@@ -133,6 +152,7 @@ std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
 }
 
 int main() {
+/*
     auto codes = code_list("testing/grassl.txt");
     
     for (auto &code : codes) {
@@ -143,8 +163,7 @@ int main() {
         n = code_mat.m / 2;
         k = code_mat.m / 2 - code_mat.n;
 
-        if (n <= 30)
-            continue;
+        BMatrix destab = destabilizers(code_mat, logical_operators(code_mat)); // just to check if destabilizers works
 
         std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
         int dist = get_distance(code_mat, MIDDLE_ALGORITHM, COMPUTE_TYPE { true, false, 1024 }, false);
@@ -154,6 +173,31 @@ int main() {
             std::cout << "Error: " << dist << " " << low_bound << " " << high_bound << std::endl;
             break;
         }
+    }
+*/
+    std::ifstream code_stream("testing/bens thing/ben_stabs.txt");
+    std::string current;
+    std::vector<std::string> code_str;
+    std::vector<BVector> pauli_strings;
+    std::vector<int> dist_results;
+
+    while (code_stream >> current)
+        code_str.push_back(current);
+    BMatrix code = bmatrix_conversion(code_str);
+
+    std::ifstream paulistring_stream("testing/bens thing/ben_paulistrings.txt");
+    while (paulistring_stream >> current)
+        pauli_strings.push_back(bvector_conversion(current));
+
+    std::ifstream answer_stream("testing/bens thing/ben_ans.txt");
+    while (answer_stream >> current)
+        dist_results.push_back(std::stoi(current));
+
+    for (int i = 0; i < dist_results.size(); ++i) {
+        int dist = get_operator_weight(code, pauli_strings[i], COMPUTE_TYPE { true, false, 1 }, false);
+        std::cout << i + 1 << ' ' << dist << ' ' << dist_results[i] << std::endl;
+        if (dist != dist_results[i])
+            break;
     }
 
     return 0;

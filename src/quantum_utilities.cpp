@@ -144,6 +144,16 @@ int bruteforce_distance1(BMatrix stab_mat) {
 }
 
 
+std::pair<BVector, BVector> zx_parts(BVector vec) {
+    BVector z_vec(vec.n / 2), x_vec(vec.n / 2);
+    for (int i = 0; i < vec.n; ++i) {
+        z_vec.set(i, vec.get(2 * i));
+        x_vec.set(i, vec.get(2 * i + 1));
+    }
+
+    return std::make_pair(z_vec, x_vec);
+}
+
 std::pair<BMatrix, BMatrix> zx_parts(BMatrix mat) {
     const int n = mat.n;
     const int m = mat.m;
@@ -218,28 +228,55 @@ BMatrix logical_operators(BMatrix v_base) {
     return result;
 }
 
-std::pair<BMatrix, BMatrix> css_destabilizers(BMatrix stab_mat) {
-    BMatrix logical_ops = logical_operators(stab_mat);
+BMatrix destabilizers(BMatrix stab, BMatrix logs) {
+    BMatrix comm_total;
+    comm_total = stab;
+    for (int i = 0; i < logs.n; ++i)
+        comm_total.append_row(logs.row(i));
 
-    BMatrix z_stab, x_stab;
-    std::tie(z_stab, x_stab) = zx_parts(stab_mat);
+    BMatrix destab = basis_completion(comm_total);
 
-    BMatrix z_log, x_log;
-    std::tie(z_log, x_log) = zx_parts(logical_ops);
+    my_assert(destab.n == stab.n);
 
-    BMatrix z_total, x_total;
-    z_total = z_stab;
-    for (int i = 0; i < z_log.n; ++i)
-        z_total.append_row(z_log.row(i));
-    x_total = x_stab;
-    for (int i = 0; i < x_log.n; ++i)
-        x_total.append_row(x_log.row(i));
+    // first, we ensure that the destabilizers commute with all logical operators
+    for (int i = 0; i < destab.n; ++i) {
+        for (int j = 0; j < logs.n; j+= 2) {
+            if (sym_prod(destab.row(i), logs.row(j)))
+                destab.row(i) = destab.row(i) + logs.row(j + 1);
+            if (sym_prod(destab.row(i), logs.row(j + 1)))
+                destab.row(i) = destab.row(i) + logs.row(j);
+        }
+    }
 
-    BMatrix z_destab, x_destab;
-    z_destab = basis_completion(z_total);
-    x_destab = basis_completion(x_total);
+    // now we pair up a destabilizer to each stabilizer
+    for (int i = 0; i < stab.n; ++i) {
+        int anticomm = -1;
+        for (int j = i; j < destab.n; ++j) {
+            if (sym_prod(stab.row(i), destab.row(j))) {
+                anticomm = j;
+                break;
+            }
+        }
+        if (anticomm == -1) {
+            std::cerr << "Unpaired destabilizer" << std::endl;
+            my_assert(false);
+        }
 
+        std::swap(destab.row(i), destab.row(anticomm));
+        for (int j = i + 1; j < destab.n; ++j) {
+            if (sym_prod(stab.row(i), destab.row(j)))
+                destab.add_rows(i, j);
+        }
+    }
 
+    // Enforce that the destabilizers commute with the stabilizers
+    for (int i = 0; i < destab.n; ++i) {
+        for (int j = i + 1; j < destab.n; ++j) {
+            if (sym_prod(destab.row(i), destab.row(j))) {
+                destab.row(i) = destab.row(i) + stab.row(j);
+            }
+        }
+    }
 
-    return std::make_pair(z_destab, x_destab);
+    return destab;
 }

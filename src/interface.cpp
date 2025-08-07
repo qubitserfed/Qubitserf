@@ -10,6 +10,7 @@
 
 #include "linear_algebra.hpp"
 #include "get_distance.hpp"
+#include "operator_weight.hpp"
 
 using u64 = unsigned long long;
 
@@ -50,35 +51,34 @@ BMatrix bmatrix_conversion(std::vector<std::string> code) {
     return result;
 }
 
-void parse_arguments(int argc, char **argv, BMatrix &code, ALGORITHMS &algorithm, COMPUTE_TYPE &compute_type, bool &verbose_flag, bool &zx_flag) {
+void parse_arguments(int argc, char **argv, bool &operator_flag, ALGORITHMS &algorithm, COMPUTE_TYPE &compute_type, bool &verbose_flag, bool &zx_flag) {
     std::vector<std::string> argv_flags;
     std::vector<std::string>::iterator it;
 
     algorithm = MIDDLE_ALGORITHM;
     compute_type = (COMPUTE_TYPE) { true, false, 1 };
+    operator_flag = false;
     verbose_flag = false;
     zx_flag = false;
 
     for (int i = 1; i < argc; ++i)
         argv_flags.push_back( std::string(argv[i]) );
 
+    it = std::find(argv_flags.begin(), argv_flags.end(), "--operator");
+    if (it != argv_flags.end())
+        operator_flag = true;
+
+    it = std::find(argv_flags.begin(), argv_flags.end(), "-o");
+    if (it != argv_flags.end())
+        operator_flag = true;
+
     it = std::find(argv_flags.begin(), argv_flags.end(), "--bz");
-    if (it != argv_flags.end()) {
-        if (!is_css(code)) {
-            std :: cerr << "The Brouwer-Zimmerman Algorithm does not currently support non-CSS codes!\n";
-            exit(1);
-        }
+    if (it != argv_flags.end())
         algorithm = BROUWER_ZIMMERMAN_ALGORITHM;
-    }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--zx");
-    if (it != argv_flags.end()) {
-        if (!is_css(code)) {
-            std :: cerr << "You cannot ask for the Z and X distances of a non-CSS code.\n";
-            exit(1);
-        }
+    if (it != argv_flags.end())
         zx_flag = true;
-    }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--threads");
     if (it != argv_flags.end()) {
@@ -97,14 +97,12 @@ void parse_arguments(int argc, char **argv, BMatrix &code, ALGORITHMS &algorithm
     }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "--verbose");
-    if (it != argv_flags.end()) {
+    if (it != argv_flags.end())
         verbose_flag = true;
-    }
 
     it = std::find(argv_flags.begin(), argv_flags.end(), "-v");
-    if (it != argv_flags.end()) {
+    if (it != argv_flags.end())
         verbose_flag = true;
-    }
 }
 
 
@@ -113,7 +111,7 @@ int main(int argc, char **argv) {
     BMatrix code;
     ALGORITHMS algorithm;
     COMPUTE_TYPE compute_type;
-    bool zx_flag, verbose_flag;
+    bool zx_flag, verbose_flag, operator_flag;
 
     // Read code from stdin
     std::string current;
@@ -126,7 +124,24 @@ int main(int argc, char **argv) {
     code = bmatrix_conversion(code_strs);
 
     // Parse command line arguments
-    parse_arguments(argc, argv, code, algorithm, compute_type, verbose_flag, zx_flag);
+    parse_arguments(argc, argv, operator_flag, algorithm, compute_type, verbose_flag, zx_flag);
+
+    if (operator_flag) {
+        BVector vec;
+        vec = code.row(code.n - 1);
+        code.pop_row();
+        if (zx_flag) {
+            std::pair<int, int> dists = get_zx_operator_weight(code, vec, compute_type, verbose_flag);
+            if (!verbose_flag)
+                std::cout << dists.first << ' ' << dists.second << std::endl;
+        }
+        else {
+            int dist = get_operator_weight(code, vec, compute_type, verbose_flag);
+            if (!verbose_flag)
+                std::cout << dist << std::endl;
+        }
+        return 0;
+    }
 
     // Do the work
     if (zx_flag) {

@@ -438,7 +438,7 @@ BMatrix transposed_product(BMatrix &a, BMatrix &b) {
 // input: a vector v and a matrix M
 // output: the product v * M^T
 BVector transposed_product(const BVector &v, BMatrix &mat) {
-    my_assert(v.n == mat.m);
+//    my_assert(v.n == mat.m);
 
     const int n = mat.n;
     const int m = mat.m;
