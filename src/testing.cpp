@@ -133,7 +133,7 @@ std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
 }
 
 int main() {
-    auto codes = code_list("testing/d4_codes.txt");
+    auto codes = code_list("testing/grassl.txt");
     
     for (auto &code : codes) {
         BMatrix code_mat;
@@ -142,6 +142,9 @@ int main() {
 
         n = code_mat.m / 2;
         k = code_mat.m / 2 - code_mat.n;
+
+        if (n <= 30)
+            continue;
 
         std::cout << n << " " << k << " " << low_bound << " " << high_bound << " - ";
         int dist = get_distance(code_mat, MIDDLE_ALGORITHM, COMPUTE_TYPE { true, false, 1024 }, false);

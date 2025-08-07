@@ -1,3 +1,4 @@
+#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <vector>
@@ -190,6 +191,28 @@ BMatrix logical_operators(BMatrix v_base) {
             }
         }
         extension.pop_row();
+    }
+
+    for (int i = 0; i < result.n; i+= 2) {
+        int anticommuter = -1;
+        for (int j = i + 1; j < result.n; ++j) {
+            if (sym_prod(result.row(i), result.row(j))) {
+                anticommuter = j;
+                break;
+            }
+        }
+        if (anticommuter == -1) {
+            std::cerr << "Logical operators are not anticommuting" << std::endl;
+            my_assert(false);
+        }
+
+        std::swap(result.row(i + 1), result.row(anticommuter));
+        for (int j = i + 2; j < result.n; ++j) {
+            if (sym_prod(result.row(i), result.row(j)))
+                result.add_rows(i + 1, j);
+            if (sym_prod(result.row(i + 1), result.row(j)))
+                result.add_rows(i, j);
+        }
     }
 
     return result;
