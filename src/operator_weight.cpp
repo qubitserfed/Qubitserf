@@ -10,10 +10,14 @@ int get_css_operator_weight(BMatrix stabs, BMatrix logs, BMatrix destabs, BVecto
     Printer printer(verbose);
     ParallelHashTable *s0, *s1;
 
-    if (stabs.n == 0)
+    if (stabs.n == 0) {
+        printer("Distance: =", vec.weight(), "\n");
         return vec.weight();
-    if (in_span(stabs, vec))
+    }
+    if (in_span(stabs, vec)) {
+        printer("Distance: =0\n");
         return 0;
+    }
 
     s0 = new ParallelHashTable();
     s1 = new ParallelHashTable();
@@ -89,9 +93,9 @@ std::pair<int, int> get_zx_operator_weight(BMatrix stabs, BVector vec, COMPUTE_T
     std::tie(z_destabs, x_destabs) = zx_parts(destabs);
     z_destabs.remove_zeros(); x_destabs.remove_zeros();
 
-    printer("Computing Z-weight modulo stabilizers...");
+    printer("Computing Z-weight modulo stabilizers...\n");
     int z_dist = get_css_operator_weight(z_stabs, x_ops, x_destabs, z_vec, compute_type, verbose);
-    printer("Computing X-weight modulo stabilizers...");
+    printer("Computing X-weight modulo stabilizers...\n");
     int x_dist = get_css_operator_weight(x_stabs, z_ops, z_destabs, x_vec, compute_type, verbose);
     printer("Total Elapsed:", Timestamp(), "\n");
 
@@ -101,7 +105,7 @@ std::pair<int, int> get_zx_operator_weight(BMatrix stabs, BVector vec, COMPUTE_T
 int get_operator_weight(BMatrix stabs, BVector vec, COMPUTE_TYPE compute_type = {true, false, 1}, bool verbose = false) {
     if (is_css(stabs)) {
         int x_dist, z_dist;
-        std::tie(x_dist, z_dist) = get_zx_operator_weight(stabs, vec);
+        std::tie(x_dist, z_dist) = get_zx_operator_weight(stabs, vec, compute_type, verbose);
         return std::max(x_dist, z_dist);
     }
     else {
