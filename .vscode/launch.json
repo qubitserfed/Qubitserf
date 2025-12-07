@@ -13,5 +13,23 @@
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile"
         },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Unit Tests",
+            "program": "${workspaceFolder}/build/unit_tests",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build unit tests"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Unit Tests (Debug Build)",
+            "program": "${workspaceFolder}/build/debug/unit_tests",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build unit tests (debug)"
+        }
     ]
 }

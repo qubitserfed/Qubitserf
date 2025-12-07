@@ -8,9 +8,7 @@
 
 using u64 = unsigned long long;
 
-void my_assert(bool arg) {
-    assert(arg);
-}
+
 
 int popcount(u64 num) {
     return __builtin_popcountll(num);

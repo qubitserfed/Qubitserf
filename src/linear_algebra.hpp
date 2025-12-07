@@ -49,7 +49,7 @@ struct BMatrix {
 };
 
 
-void                my_assert                       (bool arg);
+#define my_assert(arg) assert(arg)
 int                 popcount                        (u64 num);
 void                print                           (BVector vec);
 BVector             operator +                      (const BVector &, const BVector &);

@@ -4,18 +4,21 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/tests",
                 "/opt/homebrew/opt/libomp/include",
                 "/opt/local/include"
             ],
             "defines": [],
-            "macFrameworkPath": [
-//                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
-            ],
+            "macFrameworkPath": [],
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "macos-clang-arm64",
-            "configurationProvider": "ms-vscode.makefile-tools",
-            "compilerArgs": []
+            "compilerArgs": [
+                "-std=c++17",
+                "-Wall",
+                "-Wextra"
+            ]
         }
     ],
     "version": 4
