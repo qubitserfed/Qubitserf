@@ -3,14 +3,13 @@
 #include <iostream>
 
 TEST_CASE("Steane test") {
-    // [IIIXXXX IXXIXXI XIXIXIX IIIZZZZ IZZIZZI ZIZIZIZ]
     char* inputs[] = {
         (char*)"XXXXIII",
         (char*)"IXXIXXI",
-        (char*)"XIXIXIX",
-        (char*)"IIIZZZZ",
+        (char*)"IIXXIXX",
+        (char*)"ZZZZIII",
         (char*)"IZZIZZI",
-        (char*)"ZIZIZIZ"
+        (char*)"IIZZIZZ"
     };
 
     int n = 7;
@@ -25,15 +24,27 @@ TEST_CASE("Steane test") {
 
     CSS_Table *table = css_make_table(n, k, 3, code);
 
-    std::cout << "parsing word" << std::endl;
-    auto word = parse_word("XXXIIII", n);
-    print(word);
+    auto word = parse_word("XXIIXII", n);
 
-    std::cout << "lookup word" << std::endl;
     auto res = css_lookup_word(word, code, table);
-    std::cout<<res.first<<" "<<res.second<<std::endl;
+    
+    std::cout << res.first << " " << res.second <<std::endl;
 
     // Cleanup
     delete code;
     delete table;
 }
+/*
+stabs in row-echelon form:
+XIIXXXI
+IXIXXIX
+IIXXIXX
+
+random error:
+IIIXIXI
+
+table->x_lookup[2][1010] == true if and only if the error with reduced form 1010 is equivalent to a weight 2 error 
+
+X stabcomms + X logicals + X anticomms
+Z anticomms + Z logicals + Z stabs
+*/

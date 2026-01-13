@@ -197,6 +197,8 @@ CSS_Table *css_make_table(int n, int k, int bd, CSS_Code *code) {
         table->x_lookup.push_back(BVector(1ULL << (n - code->z_stabs.n)));
         table->z_lookup.push_back(BVector(1ULL << (n - code->x_stabs.n)));
 
+        // table->x_lookup[d] - table with 2^(n - number of x stabilizers)
+
         parallel_combinations(n, d, [&](BVector &v) {
             BVector z_word = v, x_word = v;
 
