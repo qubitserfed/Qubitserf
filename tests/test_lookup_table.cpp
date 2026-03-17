@@ -34,6 +34,7 @@ TEST_CASE("Steane test") {
     delete code;
     delete table;
 }
+
 /*
 stabs in row-echelon form:
 XIIXXXI

@@ -27,7 +27,7 @@ int get_css_operator_weight(BMatrix stabs, BMatrix logs, BMatrix destabs, BVecto
 
     printer(ResetTime());
 
-    s0->insert(BVector(logs.n), BVector(logs.m));
+    s0->insert(BVector(logs.n), BVector(stabs.n));
     for (int d = 1; d <= n; ++d) {
         std::swap(s0, s1);
         s0->reset_for_code(n, d, false);

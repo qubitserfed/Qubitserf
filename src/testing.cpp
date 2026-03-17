@@ -151,6 +151,32 @@ std::vector<std::tuple<BMatrix, int, int>> code_list(std::string filename) {
     return bencodes;
 }
 
+void operator_weight_issue() {
+    BMatrix stabs = bmatrix_conversion({
+        "XXXXIIIIIIIIIIIII",
+        "ZZZZIIIIIIIIIIIII",
+        "XIXIXXIIIIIIIIIII",
+        "ZIZIZZIIIIIIIIIII",
+        "IIIIXXIIXXIIIIIII",
+        "IIIIZZIIZZIIIIIII",
+        "IIIIIIXXIIXXIIIII",
+        "IIIIIIZZIIZZIIIII",
+        "IIIIIIIIXXIIXXIII",
+        "IIIIIIIIZZIIZZIII",
+        "IIIIIIIIIIXXIIXXI",
+        "IIIIIIIIIIZZIIZZI",
+        "IIIIIIIXIIIXIIIXX",
+        "IIIIIIIZIIIZIIIZZ",
+        "IIXXIXXIIXXIIXXII",
+        "IIZZIZZIIZZIIZZII",
+        "ZZZZZZZZZZZZZZZZZ",
+    });
+    BVector vec = bvector_conversion("IIIIIZIIIIIIIIIII");
+
+    std::cout << get_operator_weight(stabs, vec, COMPUTE_TYPE { true, false, 1 }, false) << std::endl;
+}
+
+
 int main() {
 /*
     auto codes = code_list("testing/grassl.txt");
@@ -175,6 +201,9 @@ int main() {
         }
     }
 */
+    operator_weight_issue();
+    return 0;
+    
     std::ifstream code_stream("testing/bens thing/ben_stabs.txt");
     std::string current;
     std::vector<std::string> code_str;
